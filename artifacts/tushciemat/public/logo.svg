@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 42" fill="none">
+  <rect width="42" height="42" rx="12" fill="#245B4D"/>
+  <path d="M10 18.2 21 11l11 7.2v13.3H10V18.2Z" stroke="#F7F1DD" stroke-width="2.3" stroke-linejoin="round"/>
+  <path d="M16 31.5v-8h10v8M8.5 19.1 21 10l12.5 9.1" stroke="#E5C876" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="53" y="28" fill="#173B33" font-family="Manrope, sans-serif" font-size="20" font-weight="800" letter-spacing="-1">Tushciemat</text>
+  <circle cx="166" cy="26" r="2" fill="#B98D3C"/>
+</svg>

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Tushciemat"
+description = "A multi-school education platform for Kenyan institutions, connecting school operations, teachers, parents, students and tutors through a secure, role-aware learning and management experience."
+version = "1.0.0"
+id = "artifacts/tushciemat"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20722
+
+[services.development]
+run = "pnpm --filter @workspace/tushciemat run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tushciemat", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tushciemat/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20722"
+BASE_PATH = "/"

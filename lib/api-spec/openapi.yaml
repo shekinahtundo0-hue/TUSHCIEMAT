@@ -1,0 +1,396 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Tushciemat school operations API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: schools
+    description: School onboarding and current-school context
+  - name: dashboard
+    description: Live school summary
+  - name: students
+    description: Student records
+  - name: classes
+    description: Class and stream records
+  - name: attendance
+    description: Daily class attendance
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /schools:
+    post:
+      operationId: createSchool
+      tags: [schools]
+      summary: Create a school workspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SchoolInput"
+      responses:
+        "201":
+          description: School workspace created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/School"
+        "409":
+          description: School name is already in use
+  /schools/me:
+    get:
+      operationId: getSchoolContext
+      tags: [schools]
+      summary: Get the signed-in user's school memberships
+      responses:
+        "200":
+          description: Current user and memberships
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SchoolContext"
+  /dashboard:
+    get:
+      operationId: getDashboard
+      tags: [dashboard]
+      summary: Get live counts for the user's current school
+      responses:
+        "200":
+          description: School dashboard counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /students:
+    get:
+      operationId: listStudents
+      tags: [students]
+      summary: Search and list students
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: classId
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Paginated students for the current school
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudentPage"
+    post:
+      operationId: createStudent
+      tags: [students]
+      summary: Register a student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentInput"
+      responses:
+        "201":
+          description: Student created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+  /students/{studentId}:
+    patch:
+      operationId: updateStudent
+      tags: [students]
+      summary: Update a student record
+      parameters:
+        - in: path
+          name: studentId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StudentUpdate"
+      responses:
+        "200":
+          description: Updated student
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Student"
+        "404":
+          description: Student not found in current school
+  /classes:
+    get:
+      operationId: listClasses
+      tags: [classes]
+      summary: List classes in the current school
+      responses:
+        "200":
+          description: Classes with student counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClassRecord"
+    post:
+      operationId: createClass
+      tags: [classes]
+      summary: Create a class or stream
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClassInput"
+      responses:
+        "201":
+          description: Class created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClassRecord"
+  /attendance:
+    get:
+      operationId: listAttendance
+      tags: [attendance]
+      summary: Get a class register for one date
+      parameters:
+        - in: query
+          name: date
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: classId
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Attendance records for the date
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceRecord"
+    post:
+      operationId: saveAttendance
+      tags: [attendance]
+      summary: Record or update attendance for a class
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AttendanceInput"
+      responses:
+        "200":
+          description: Saved attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AttendanceRecord"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    SchoolInput:
+      type: object
+      additionalProperties: false
+      required: [name, category, curriculum]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 160 }
+        category: { type: string, enum: [primary, secondary, mixed, tertiary, other] }
+        curriculum: { type: string, minLength: 2, maxLength: 80 }
+        county: { type: ["string", "null"], maxLength: 100 }
+    School:
+      type: object
+      required: [id, name, category, curriculum, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string }
+        curriculum: { type: string }
+        county: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+    SchoolMembership:
+      type: object
+      required: [id, schoolId, schoolName, role, status]
+      properties:
+        id: { type: string, format: uuid }
+        schoolId: { type: string, format: uuid }
+        schoolName: { type: string }
+        role:
+          type: string
+          enum: [owner, school_admin, principal, academic_admin, bursar, teacher, parent, student, tutor, platform_admin]
+        status: { type: string, enum: [active, invited, suspended] }
+    SchoolContext:
+      type: object
+      required: [userId, memberships]
+      properties:
+        userId: { type: string }
+        fullName: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        memberships:
+          type: array
+          items: { $ref: "#/components/schemas/SchoolMembership" }
+    DashboardSummary:
+      type: object
+      required: [school, totalStudents, totalClasses, totalTeachers, presentToday, absentToday, attendanceRate]
+      properties:
+        school: { oneOf: [{ $ref: "#/components/schemas/School" }, { type: "null" }] }
+        totalStudents: { type: integer }
+        totalClasses: { type: integer }
+        totalTeachers: { type: integer }
+        presentToday: { type: integer }
+        absentToday: { type: integer }
+        attendanceRate: { type: number }
+    ClassInput:
+      type: object
+      additionalProperties: false
+      required: [name, grade, academicYear]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 100 }
+        grade: { type: string, minLength: 1, maxLength: 40 }
+        stream: { type: ["string", "null"], maxLength: 40 }
+        academicYear: { type: string, minLength: 4, maxLength: 20 }
+    ClassRecord:
+      type: object
+      required: [id, name, grade, stream, academicYear, studentCount]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        grade: { type: string }
+        stream: { type: ["string", "null"] }
+        academicYear: { type: string }
+        studentCount: { type: integer }
+    StudentInput:
+      type: object
+      additionalProperties: false
+      required: [firstName, lastName, admissionNumber]
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 80 }
+        lastName: { type: string, minLength: 1, maxLength: 80 }
+        admissionNumber: { type: string, minLength: 1, maxLength: 40 }
+        classId: { type: ["string", "null"], format: uuid }
+        guardianName: { type: ["string", "null"], maxLength: 160 }
+        guardianEmail: { type: ["string", "null"], format: email }
+        guardianPhone: { type: ["string", "null"], maxLength: 40 }
+        status: { type: string, enum: [active, transferred, graduated, inactive], default: active }
+    StudentUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        firstName: { type: string, minLength: 1, maxLength: 80 }
+        lastName: { type: string, minLength: 1, maxLength: 80 }
+        admissionNumber: { type: string, minLength: 1, maxLength: 40 }
+        classId: { type: ["string", "null"], format: uuid }
+        guardianName: { type: ["string", "null"], maxLength: 160 }
+        guardianEmail: { type: ["string", "null"], format: email }
+        guardianPhone: { type: ["string", "null"], maxLength: 40 }
+        status: { type: string, enum: [active, transferred, graduated, inactive] }
+    Student:
+      type: object
+      required: [id, firstName, lastName, admissionNumber, classId, className, guardianName, guardianEmail, guardianPhone, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        firstName: { type: string }
+        lastName: { type: string }
+        admissionNumber: { type: string }
+        classId: { type: ["string", "null"] }
+        className: { type: ["string", "null"] }
+        guardianName: { type: ["string", "null"] }
+        guardianEmail: { type: ["string", "null"] }
+        guardianPhone: { type: ["string", "null"] }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    StudentPage:
+      type: object
+      required: [items, total, page, pageSize]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Student" }
+        total: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+    AttendanceInput:
+      type: object
+      additionalProperties: false
+      required: [classId, date, records]
+      properties:
+        classId: { type: string, format: uuid }
+        date: { type: string, format: date }
+        records:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            type: object
+            additionalProperties: false
+            required: [studentId, status]
+            properties:
+              studentId: { type: string, format: uuid }
+              status: { type: string, enum: [present, absent, late, excused] }
+              note: { type: ["string", "null"], maxLength: 500 }
+    AttendanceRecord:
+      type: object
+      required: [id, studentId, studentName, admissionNumber, classId, date, status, note]
+      properties:
+        id: { type: string, format: uuid }
+        studentId: { type: string, format: uuid }
+        studentName: { type: string }
+        admissionNumber: { type: string }
+        classId: { type: string, format: uuid }
+        date: { type: string, format: date }
+        status: { type: string, enum: [present, absent, late, excused] }
+        note: { type: ["string", "null"] }
+

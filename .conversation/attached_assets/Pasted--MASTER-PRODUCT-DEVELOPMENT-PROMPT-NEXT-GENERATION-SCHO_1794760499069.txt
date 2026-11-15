@@ -1,0 +1,973 @@
+# MASTER PRODUCT DEVELOPMENT PROMPT
+## NEXT-GENERATION SCHOOL MANAGEMENT, DIGITAL LEARNING & EDUCATION ECOSYSTEM
+
+### 1. YOUR ROLE
+
+Act as a world-class team consisting of:
+- Senior EdTech product architect
+- Senior full-stack software engineer
+- UI/UX designer
+- Database architect
+- Education technology specialist
+- Cybersecurity engineer
+- Data analytics engineer
+- AI integration specialist
+
+Your task is to design and develop a complete, production-oriented, next-generation educational technology platform for the Kenyan education market, with an architecture capable of expanding throughout Africa.
+
+This is an independent product. Do not copy Zeraki's branding, interface, source code, proprietary content or intellectual property. Use established education technology products as functional benchmarks while developing a distinct and more comprehensive experience.
+
+The objective is to create a unified ecosystem that connects school administrators, teachers, parents, students, private tutors and educational institutions.
+
+The platform must be visually exceptional, technically robust, responsive, secure and genuinely functional.
+
+---
+
+# 2. PRODUCT VISION
+
+Build one integrated platform with six interconnected systems:
+
+1. School Management System.
+2. Academic Analytics and Examination Management.
+3. School Financial Management.
+4. Digital Learning Management System.
+5. Tutor Discovery and Booking Marketplace.
+6. AI-Powered Academic Intelligence System.
+
+All six systems must communicate through a unified database and permission-controlled infrastructure.
+
+The platform should eliminate fragmented school operations by bringing academic administration, financial management, communication, digital learning and student development into one environment.
+
+### Target users
+
+- School owners and directors.
+- School administrators and principals.
+- Teachers and academic departments.
+- School accountants and bursars.
+- Parents and guardians.
+- Primary and secondary school students.
+- Private tutors and learning institutions.
+- Platform super administrators.
+
+Support CBC/CBE-aligned education structures in Kenya, while allowing configurable international curricula and examination systems.
+
+---
+
+# 3. THREE DISTINCT PRIMARY PORTALS
+
+The three main portals must have separate interfaces, navigation structures, dashboards and permissions.
+
+Users must never be confused about which environment they are using.
+
+## A. ADMINISTRATION PORTAL
+
+This is the central command centre of the school.
+
+The administrator should have a comprehensive dashboard displaying:
+
+- Total enrolled students.
+- Total teaching and non-teaching staff.
+- Student attendance statistics.
+- Teacher attendance statistics.
+- Academic performance summaries.
+- Fee collection summaries.
+- Outstanding fee balances.
+- Examination performance.
+- Class and department performance.
+- Upcoming school activities.
+- Pending administrative approvals.
+- Recent system activity.
+- Important notifications.
+
+### Student management
+
+- Register new students.
+- Generate unique admission numbers.
+- Assign students to classes, streams and academic years.
+- Maintain student profiles.
+- Manage guardian information.
+- Record student transfers.
+- Manage student status.
+- Maintain academic histories.
+- Upload supporting documents.
+- Generate student reports.
+
+### Teacher and staff management
+
+- Register teachers and employees.
+- Assign subjects and classes.
+- Manage teaching departments.
+- Manage staff profiles.
+- Record attendance.
+- Manage staff responsibilities.
+- Monitor assigned academic activities.
+- Manage leave requests.
+- Maintain staff records.
+
+### Academic management
+
+- Create academic years and terms.
+- Configure school classes and streams.
+- Create subjects.
+- Assign teachers to subjects.
+- Create examinations.
+- Configure grading systems.
+- Upload examination marks.
+- Generate report cards.
+- Generate transcripts.
+- Compare academic performance.
+- Identify subject weaknesses.
+- Monitor class and school performance.
+
+### Examination management
+
+Build a dedicated examination management engine.
+
+Include:
+- Examination creation.
+- Examination timetables.
+- Subject allocation.
+- Student examination registration.
+- Marks entry.
+- Marks validation.
+- Grading configuration.
+- Examination analysis.
+- Class rankings where enabled by school policy.
+- Subject performance analysis.
+- Individual student performance.
+- Report generation.
+- Historical examination comparisons.
+
+Support multiple grading structures rather than hardcoding one grading system.
+
+### Financial management
+
+Create a comprehensive school accounting and fee management system.
+
+Include:
+- Fee structures.
+- Student fee accounts.
+- Fee balances.
+- Fee payments.
+- Payment receipts.
+- Payment allocation.
+- Fee arrears.
+- Payment plans.
+- Scholarships and bursaries.
+- Discounts.
+- Parent payment statements.
+- Financial reconciliation.
+- Income tracking.
+- Expense tracking.
+- Supplier records.
+- Purchase orders.
+- Payment vouchers.
+- Cashbook.
+- Financial summaries.
+- Financial reports.
+
+Include configurable payment methods, including M-Pesa integration through authorised payment APIs, bank payments and manual payment recording.
+
+Never treat an initiated payment as completed until the payment provider confirms it.
+
+Maintain a complete financial audit trail.
+
+### Communication management
+
+- Send announcements to all parents.
+- Send messages to selected classes.
+- Send individual notifications.
+- Send fee reminders.
+- Send examination announcements.
+- Send attendance alerts.
+- Manage school events.
+- Manage parent-teacher communication.
+- Maintain message delivery records.
+
+Support in-app notifications, email and configurable SMS integration.
+
+### Institutional management
+
+- School profile management.
+- Multiple campuses.
+- School calendar.
+- Class timetables.
+- School policies.
+- School documents.
+- Transport management.
+- Boarding management.
+- Library management.
+- Inventory management.
+- School activities.
+- Disciplinary records with appropriate access restrictions.
+
+---
+
+## B. PARENT PORTAL
+
+Create a dedicated parent and guardian experience.
+
+Parents must only access information belonging to students they are authorised to manage.
+
+Allow one parent account to be connected to multiple children, including children attending different schools where supported.
+
+### Parent dashboard
+
+Display:
+
+- Children's profiles.
+- Current classes.
+- Recent academic results.
+- Attendance summaries.
+- Outstanding school fees.
+- Recent school announcements.
+- Upcoming examinations.
+- Assignments.
+- Teacher feedback.
+- Important alerts.
+
+### Academic monitoring
+
+Parents should be able to:
+
+- View examination results.
+- Download report cards.
+- View subject-by-subject performance.
+- Track academic progress over time.
+- Identify areas requiring additional support.
+- View teacher comments.
+- Monitor assignment completion.
+- Compare progress across academic terms.
+
+### Financial monitoring
+
+- View current fee balances.
+- View fee statements.
+- View payment history.
+- Download receipts.
+- View fee structures.
+- View outstanding balances.
+- Receive payment reminders.
+- View payment confirmations.
+
+### Attendance monitoring
+
+- Receive notifications when a child is marked present or absent.
+- View attendance history.
+- View late-arrival records.
+- View authorised absence information.
+
+### Parent-school communication
+
+- Communicate with teachers.
+- Contact school administration.
+- Receive official announcements.
+- Request parent-teacher meetings.
+- View meeting schedules.
+- Submit enquiries.
+- Receive notifications about important student activities.
+
+### Child development
+
+Include a development dashboard covering:
+
+- Academic progress.
+- Participation in school activities.
+- Assignment completion.
+- Teacher feedback.
+- Co-curricular participation.
+- Identified learning support needs.
+
+Present information constructively rather than publicly ranking or embarrassing students.
+
+---
+
+## C. STUDENT PORTAL
+
+Create a modern, engaging and personalised digital learning environment.
+
+The student experience should feel like a combination of a learning management system, academic companion and digital classroom.
+
+### Student dashboard
+
+Display:
+
+- Student profile.
+- Current grade and class.
+- Subjects.
+- Upcoming examinations.
+- Pending assignments.
+- Recent results.
+- Learning progress.
+- Upcoming lessons.
+- Teacher announcements.
+- Learning recommendations.
+- Personal study timetable.
+
+### Digital learning centre
+
+Build a comprehensive learning environment with:
+
+- Video lessons.
+- Interactive lessons.
+- Downloadable notes.
+- Subject-specific resources.
+- Topic-based revision.
+- Quizzes.
+- Practice examinations.
+- Assignments.
+- Learning exercises.
+- Educational simulations.
+- Flashcards.
+- Revision timetables.
+- Progress tracking.
+
+Organise learning content according to the selected curriculum, grade, subject, strand, sub-strand and learning outcomes where applicable.
+
+### Examination and assessment centre
+
+Students should be able to:
+
+- Access assigned examinations.
+- Complete online assessments.
+- Submit assignments.
+- View released examination results.
+- Review teacher feedback.
+- Review incorrect answers where permitted.
+- Monitor academic improvement.
+- Access practice examinations.
+
+Build an assessment engine that supports multiple-choice, multiple-select, true/false, short-answer and structured questions.
+
+Include automatic marking for suitable question types and teacher marking for subjective questions.
+
+### Personalised learning intelligence
+
+Create a student learning analytics engine that identifies:
+
+- Strong subjects.
+- Difficult subjects.
+- Weak topics.
+- Assignment completion patterns.
+- Learning engagement.
+- Improvement over time.
+
+Generate personalised revision recommendations based on actual academic performance.
+
+### AI STUDY ASSISTANT
+
+Integrate an educational AI assistant.
+
+It should:
+
+- Explain difficult concepts in simple language.
+- Answer curriculum-related questions.
+- Generate practice questions.
+- Provide step-by-step explanations.
+- Create revision plans.
+- Help students understand mistakes.
+- Recommend relevant lessons.
+- Support different learning levels.
+
+The AI must encourage learning rather than simply provide answers to every assignment.
+
+Implement age-appropriate safeguards, privacy controls and school-configurable AI permissions.
+
+---
+
+# 4. TEACHER AND TUTOR PORTAL
+
+Create a fourth specialised portal that connects the academic and learning environments.
+
+### Teacher dashboard
+
+- Assigned classes.
+- Assigned subjects.
+- Student lists.
+- Attendance registers.
+- Examination schedules.
+- Marks entry.
+- Assignment management.
+- Learning material uploads.
+- Student performance analytics.
+- Parent communication.
+- Teaching timetable.
+
+### Teaching tools
+
+Teachers should be able to:
+- Create assignments.
+- Upload notes.
+- Upload educational videos.
+- Create quizzes.
+- Prepare examinations.
+- Mark assignments.
+- Record examination results.
+- Generate class performance reports.
+- Identify students requiring additional assistance.
+
+### Tutor marketplace
+
+Develop a separate tutor discovery and booking system.
+
+Students and parents should be able to discover qualified tutors by:
+
+- Subject.
+- Grade.
+- Curriculum.
+- Location.
+- Teaching experience.
+- Online or physical lessons.
+- Availability.
+- Hourly rates.
+
+Tutor profiles should include:
+- Professional biography.
+- Verified qualifications.
+- Subjects offered.
+- Teaching experience.
+- Availability calendar.
+- Lesson pricing.
+- Reviews and ratings.
+
+Include tutor applications, identity and qualification verification, lesson bookings, scheduling, cancellation policies and controlled communication.
+
+Provide virtual lesson integration through supported video conferencing services.
+
+Keep private tutoring independent from compulsory school administration workflows.
+
+---
+
+# 5. ADVANCED ACADEMIC ANALYTICS
+
+Build a sophisticated analytics engine.
+
+The system must transform raw examination and attendance data into useful educational insights.
+
+### Analytics for administrators
+
+- School-wide academic performance.
+- Class performance comparisons.
+- Subject performance comparisons.
+- Examination trends.
+- Student attendance trends.
+- Teacher-subject performance summaries.
+- Academic improvement trends.
+- Identification of students needing additional support.
+
+### Analytics for teachers
+
+- Individual student progress.
+- Class averages.
+- Subject weaknesses.
+- Topic-level performance.
+- Assignment completion.
+- Examination comparisons.
+
+### Analytics for parents
+
+- Individual child performance.
+- Subject strengths and weaknesses.
+- Term-to-term improvement.
+- Attendance patterns.
+- Recommended areas for additional support.
+
+### Analytics for students
+
+- Personal performance dashboard.
+- Learning milestones.
+- Topic mastery.
+- Quiz performance.
+- Revision recommendations.
+
+Use interactive charts, visual indicators, tables and downloadable reports.
+
+Never present estimated or incomplete data as confirmed results.
+
+---
+
+# 6. SCHOOL FINANCE AND ACCOUNTING ENGINE
+
+Create a dedicated financial environment with appropriate role-based access.
+
+It must support:
+
+- Student fee accounts.
+- Fee structures.
+- Multiple payment categories.
+- Receipting.
+- Payment allocation.
+- Partial payments.
+- Overpayments.
+- Fee arrears.
+- Payment plans.
+- Scholarships.
+- Expense management.
+- Budget management.
+- Cashbook.
+- Financial statements.
+- Income and expenditure reports.
+- Financial audit trails.
+
+Provide a dedicated bursar role.
+
+Administrators must not automatically receive unrestricted access to sensitive financial operations unless authorised by the school.
+
+All payment records must have transaction references, timestamps, responsible users and reconciliation status.
+
+---
+
+# 7. PLATFORM SUPER ADMINISTRATION
+
+Create a separate platform-owner environment, distinct from individual school administrators.
+
+The platform super administrator should manage:
+
+- Registered schools.
+- School subscriptions.
+- Platform users.
+- School onboarding.
+- Subscription plans.
+- Platform-wide analytics.
+- System health.
+- Payment integrations.
+- Support requests.
+- Platform announcements.
+- Account verification.
+- Suspension and restoration of institutions.
+- Audit logs.
+- Platform configuration.
+
+Support a multi-tenant architecture.
+
+Each school must have isolated data and permissions.
+
+A school administrator must never access another school's private records.
+
+---
+
+# 8. ROLE-BASED ACCESS CONTROL
+
+Implement strict permissions for:
+
+1. Platform super administrator.
+2. School owner.
+3. School administrator.
+4. Principal.
+5. Academic administrator.
+6. Bursar.
+7. Teacher.
+8. Parent.
+9. Student.
+10. Private tutor.
+
+Every role must have a defined set of permissions.
+
+Do not rely on hiding buttons in the frontend as a security measure.
+
+Enforce authorisation on the backend and database level.
+
+For sensitive actions, implement audit logs and appropriate approval workflows.
+
+---
+
+# 9. USER ONBOARDING AND ACCOUNT MANAGEMENT
+
+Build a seamless registration and authentication system.
+
+### School onboarding
+
+- Register institution.
+- Enter institution details.
+- Select school category.
+- Configure curriculum.
+- Create school administrator account.
+- Configure academic structure.
+- Invite staff.
+- Import student records.
+- Activate school dashboard.
+
+### Parent onboarding
+
+- Register account.
+- Verify contact information.
+- Connect to a student using a school-issued invitation or verification process.
+- Wait for school authorisation where required.
+
+### Student onboarding
+
+Students should receive school-issued credentials or authorised invitations.
+
+Their accounts should automatically connect to their registered institution, class and academic records.
+
+### Teacher onboarding
+
+Teachers should be invited by their institution and assigned appropriate permissions.
+
+### Tutor onboarding
+
+Tutors should submit an application and undergo the required verification process.
+
+---
+
+# 10. DESIGN AND USER EXPERIENCE
+
+The design must feel like a premium international SaaS education product.
+
+Do not create a generic school management template.
+
+### Visual direction
+
+- Modern institutional identity.
+- Premium dashboard layouts.
+- Clean typography.
+- Excellent spacing.
+- Carefully designed cards.
+- Interactive analytics.
+- Professional tables.
+- Smooth transitions.
+- Subtle micro-interactions.
+- Consistent iconography.
+- Elegant navigation.
+- Accessible colour contrast.
+
+### Separate interface identities
+
+ADMINISTRATION:
+Professional, information-dense, operational and analytical.
+
+PARENTS:
+Friendly, reassuring, simple and transparent.
+
+STUDENTS:
+Engaging, motivating, interactive and learning-focused.
+
+TEACHERS:
+Productive, organised and classroom-focused.
+
+### Responsive design
+
+The complete system must work on:
+
+- Desktop computers.
+- Laptops.
+- Tablets.
+- Android phones.
+- iPhones.
+
+Mobile users must have a complete experience, not a compressed desktop interface.
+
+Build responsive navigation, collapsible sidebars, mobile-friendly tables, accessible forms and properly scaled dashboards.
+
+Include light and dark modes.
+
+---
+
+# 11. TECHNICAL ARCHITECTURE
+
+Use a modular, maintainable architecture.
+
+Preferred technology stack:
+
+Frontend:
+- React.
+- TypeScript.
+- Vite.
+- Tailwind CSS.
+- A consistent accessible component system.
+
+Backend:
+- Supabase.
+- PostgreSQL.
+- Supabase Authentication.
+- Supabase Storage.
+- Supabase Edge Functions where appropriate.
+
+Additional integrations:
+- M-Pesa Daraja API, subject to authorised access.
+- Email notification provider.
+- SMS provider.
+- Video conferencing API.
+- AI model API.
+- PDF and spreadsheet generation.
+
+Use secure environment variables for all credentials.
+
+Never expose private API keys in frontend code.
+
+### Database architecture
+
+Design a proper relational database with tables for:
+
+- Institutions.
+- Campuses.
+- Users.
+- Roles.
+- Permissions.
+- Students.
+- Parents.
+- Guardians.
+- Teachers.
+- Tutors.
+- Classes.
+- Streams.
+- Subjects.
+- Academic years.
+- Terms.
+- Enrolments.
+- Attendance.
+- Examinations.
+- Assessment questions.
+- Marks.
+- Grading systems.
+- Report cards.
+- Assignments.
+- Learning resources.
+- Lessons.
+- Tutor profiles.
+- Tutor applications.
+- Bookings.
+- Fee structures.
+- Student accounts.
+- Payments.
+- Receipts.
+- Expenses.
+- Budgets.
+- Notifications.
+- Messages.
+- Subscriptions.
+- Audit logs.
+
+Establish appropriate foreign keys, indexes, constraints and relationships.
+
+Implement Row Level Security policies for all sensitive tables.
+
+Prevent cross-school data access.
+
+Use database transactions for financial operations and other critical multi-step processes.
+
+---
+
+# 12. PERFORMANCE AND RELIABILITY
+
+The system must be designed for real-world school usage.
+
+Requirements:
+
+- Efficient database queries.
+- Pagination.
+- Search and filtering.
+- Optimised image uploads.
+- File size validation.
+- Loading states.
+- Empty states.
+- Error handling.
+- Offline-friendly student learning resources where practical.
+- Reliable data synchronisation.
+- Automatic backups through supported infrastructure.
+- Proper session management.
+- Monitoring and error logging.
+
+Build for growth from a small school to thousands of institutions without requiring a complete architectural rewrite.
+
+---
+
+# 13. SECURITY AND DATA PROTECTION
+
+Treat student information as highly sensitive.
+
+Implement:
+
+- Strong authentication.
+- Role-based access control.
+- Database-level permissions.
+- Row Level Security.
+- Secure password handling.
+- Session expiry.
+- Input validation.
+- Rate limiting.
+- Audit logging.
+- Secure file access.
+- Protection against common web vulnerabilities.
+- Controlled data exports.
+- Account recovery.
+- Appropriate guardian consent and child data protections.
+
+Design with the Kenya Data Protection Act and applicable child-data protection requirements in mind.
+
+Do not expose student records through public URLs.
+
+Do not allow parents to access unrelated students' information.
+
+---
+
+# 14. SUBSCRIPTION AND COMMERCIAL MODEL
+
+Build the architecture to support a sustainable SaaS business.
+
+Allow configurable subscription tiers:
+
+STARTER:
+Essential school administration and student records.
+
+PROFESSIONAL:
+Academic analytics, examinations, communication and financial management.
+
+ENTERPRISE:
+Advanced analytics, multiple campuses, integrations and institutional reporting.
+
+DIGITAL LEARNING:
+Additional learning resources and premium digital education capabilities.
+
+Allow schools to request demonstrations, register, activate subscriptions and manage billing.
+
+Keep pricing configurable through the platform super administrator.
+
+Do not hardcode subscription prices.
+
+---
+
+# 15. IMPLEMENTATION STRATEGY
+
+Do not attempt to build everything as disconnected mockup pages.
+
+Build a fully integrated application.
+
+Work in carefully controlled phases.
+
+PHASE 1 — FOUNDATION
+- Project architecture.
+- Authentication.
+- Database schema.
+- Multi-tenant structure.
+- Role-based permissions.
+- School onboarding.
+
+PHASE 2 — SCHOOL MANAGEMENT
+- Student management.
+- Teacher management.
+- Classes.
+- Subjects.
+- Academic years.
+- Attendance.
+- Timetables.
+
+PHASE 3 — ACADEMIC ANALYTICS
+- Examination management.
+- Marks entry.
+- Grading.
+- Report cards.
+- Analytics.
+
+PHASE 4 — FINANCIAL MANAGEMENT
+- Fee structures.
+- Student accounts.
+- Payments.
+- Receipts.
+- Expenses.
+- Financial reporting.
+
+PHASE 5 — PARENT AND STUDENT PORTALS
+- Separate dashboards.
+- Academic visibility.
+- Notifications.
+- Assignments.
+- Learning resources.
+
+PHASE 6 — DIGITAL LEARNING
+- Video lessons.
+- Quizzes.
+- Assessments.
+- Revision centre.
+- AI study assistant.
+
+PHASE 7 — TUTOR MARKETPLACE
+- Tutor profiles.
+- Verification.
+- Discovery.
+- Booking.
+- Scheduling.
+
+PHASE 8 — ADVANCED FEATURES
+- Advanced analytics.
+- AI recommendations.
+- Integrations.
+- Subscription management.
+- Performance optimisation.
+
+---
+
+# 16. NON-NEGOTIABLE DEVELOPMENT RULES
+
+1. Build real functionality, not decorative interfaces.
+2. Never use fake statistics presented as actual school data.
+3. Every dashboard must use real database records.
+4. Every form must perform its intended operation.
+5. Every button must have a working action.
+6. Every table must support the required operations.
+7. All user roles must have distinct experiences.
+8. Enforce permissions on the backend and database.
+9. Never compromise existing functionality when adding features.
+10. Never silently replace working integrations.
+11. Provide database migrations for schema changes.
+12. Test all important workflows.
+13. Provide useful error messages.
+14. Ensure that financial records remain consistent.
+15. Do not expose credentials or sensitive student information.
+16. Avoid unnecessary duplication of components.
+17. Maintain clean, reusable and documented code.
+18. Do not claim a feature is complete until it has been implemented and tested.
+
+If an integration requires external credentials, clearly identify the missing configuration instead of simulating a successful connection.
+
+---
+
+# 17. REQUIRED FINAL DELIVERABLES
+
+Deliver:
+
+- Complete responsive web application.
+- Separate administration, parent, student and teacher portals.
+- Platform super administrator dashboard.
+- Tutor marketplace.
+- Functional authentication.
+- Complete database schema.
+- Database migrations.
+- Row Level Security policies.
+- Working financial workflows.
+- Academic reporting engine.
+- Learning management environment.
+- API integrations where configured.
+- Deployment configuration.
+- Environment variable documentation.
+- Testing documentation.
+- Administrator onboarding guide.
+- Technical documentation.
+
+---
+
+# 18. FINAL PRODUCT STANDARD
+
+The finished product must feel like a serious, premium education technology company serving thousands of schools and millions of learners.
+
+Its distinguishing advantage should be the seamless connection between:
+
+SCHOOL OPERATIONS + ACADEMIC INTELLIGENCE + FINANCIAL MANAGEMENT + DIGITAL LEARNING + PRIVATE TUTORING + AI-POWERED PERSONALISATION.
+
+The three main experiences must remain clearly differentiated:
+
+ADMINISTRATORS manage the institution.
+
+PARENTS monitor and support their children's education.
+
+STUDENTS learn, practise, improve and achieve.
+
+TEACHERS deliver and manage learning.
+
+The platform must be scalable, secure, maintainable and commercially viable.
+
+Begin by inspecting the existing project, if one exists. Present the proposed architecture, database relationships, role-permission matrix and implementation plan before making major structural changes.
+
+Then implement the system phase by phase, preserving working functionality and testing each completed module before proceeding.
+
+**The objective is not to produce a website that looks like an education platform. The objective is to build an education platform that schools can actually operate on every day.**
