@@ -5,22 +5,23 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./schema": "./src/schema/index.ts"
+    "./schema": "./src/schema/index.ts",
+    "./migrate": "./src/migrate.ts"
   },
   "scripts": {
-    "push": "drizzle-kit push --config ./drizzle.config.ts",
-    "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
-    "apply-policies": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f ./migrations/0001_school_tenant_rls.sql"
+    "generate": "drizzle-kit generate --config ./drizzle.config.ts",
+    "generate:custom": "drizzle-kit generate --custom --config ./drizzle.config.ts",
+    "check": "drizzle-kit check --config ./drizzle.config.ts",
+    "migrate": "tsx ./scripts/migrate.ts"
   },
   "dependencies": {
     "drizzle-orm": "catalog:",
-    "drizzle-zod": "^0.8.3",
-    "pg": "^8.23.1",
-    "zod": "catalog:"
+    "pg": "^8.23.1"
   },
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/pg": "^8.23.1",
-    "drizzle-kit": "^0.31.11"
+    "drizzle-kit": "^0.31.11",
+    "tsx": "catalog:"
   }
 }

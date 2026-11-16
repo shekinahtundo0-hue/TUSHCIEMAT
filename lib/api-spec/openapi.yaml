@@ -2,316 +2,939 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: Tushciemat school operations API
+  version: 1.0.0
+  description: |
+    Tushciemat school operations API.
+    Every school-scoped request must send the `X-School-Id` header for the
+    school the caller is acting in. Errors use the envelope
+    `{ "error": { "code", "message", "requestId" } }`.
 servers:
-  - url: /api
-    description: Base API path
+  - url: /api/v1
+    description: Versioned API base path
+security:
+  - FirebaseBearer: []
 tags:
   - name: health
-    description: Health operations
+  - name: account
   - name: schools
-    description: School onboarding and current-school context
-  - name: dashboard
-    description: Live school summary
+  - name: academics
   - name: students
-    description: Student records
-  - name: classes
-    description: Class and stream records
   - name: attendance
-    description: Daily class attendance
+  - name: members
+  - name: portal
+  - name: platform
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
-      summary: Health check
-      description: Returns server health status
+      summary: Liveness check (does not touch the database)
+      security: []
       responses:
         "200":
-          description: Healthy
+          description: Process is running
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+  /readyz:
+    get:
+      operationId: readinessCheck
+      tags: [health]
+      summary: Readiness check (verifies the database connection)
+      security: []
+      responses:
+        "200":
+          description: Ready
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HealthStatus" }
+        "503": { $ref: "#/components/responses/Error" }
+  /me:
+    get:
+      operationId: getMe
+      tags: [account]
+      summary: Signed-in profile and school memberships
+      responses:
+        "200":
+          description: Current account
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Me" }
+        "401": { $ref: "#/components/responses/Error" }
   /schools:
     post:
       operationId: createSchool
       tags: [schools]
-      summary: Create a school workspace
+      summary: Create a school workspace with its first academic year
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/SchoolInput"
+            schema: { $ref: "#/components/schemas/SchoolInput" }
       responses:
         "201":
-          description: School workspace created
+          description: School created; the caller is its owner
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/School"
-        "409":
-          description: School name is already in use
-  /schools/me:
+              schema: { $ref: "#/components/schemas/School" }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /schools/discover:
     get:
-      operationId: getSchoolContext
+      operationId: listDiscoverableSchools
       tags: [schools]
-      summary: Get the signed-in user's school memberships
+      parameters:
+        - { in: query, name: search, schema: { type: string, maxLength: 160, default: "" } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, maximum: 101, default: 1 } }
       responses:
         "200":
-          description: Current user and memberships
+          description: Public institution metadata only, up to 20 matches
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/SchoolContext"
+              schema: { type: array, items: { $ref: "#/components/schemas/DirectorySchool" } }
+  /schools/discover/{schoolId}:
+    get:
+      operationId: getDiscoverableSchool
+      tags: [schools]
+      parameters:
+        - { in: path, name: schoolId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Public institution metadata
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DirectorySchool" }
+        "404": { $ref: "#/components/responses/Error" }
+  /schools/{schoolId}/join-requests:
+    post:
+      operationId: submitJoinRequest
+      tags: [members]
+      parameters:
+        - { in: path, name: schoolId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JoinRequestInput" }
+      responses:
+        "201":
+          description: Pending request; no permissions granted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JoinRequest" }
+        "409": { $ref: "#/components/responses/Error" }
+  /schools/{schoolId}/join-with-invitation:
+    post:
+      operationId: joinWithInvitation
+      tags: [members]
+      parameters:
+        - { in: path, name: schoolId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SchoolInvitationInput" }
+      responses:
+        "200":
+          description: Invitation accepted for the selected school and role
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcceptedInvitation" }
+  /join-requests/mine:
+    get:
+      operationId: listMyJoinRequests
+      tags: [members]
+      responses:
+        "200":
+          description: The authenticated applicant's requests
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/JoinRequest" } }
+  /join-requests:
+    get:
+      operationId: listJoinRequests
+      tags: [members]
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: This school's access requests for authorised administrators
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/JoinRequest" } }
+  /join-requests/{requestId}/review:
+    post:
+      operationId: reviewJoinRequest
+      tags: [members]
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: requestId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/JoinRequestReview" }
+      responses:
+        "200":
+          description: Atomic decision, account linking, membership and notification
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/JoinRequest" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [account]
+      responses:
+        "200":
+          description: Notifications addressed to this account only
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Notification" } }
+  /notifications/{notificationId}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [account]
+      parameters:
+        - { in: path, name: notificationId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Notification" }
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [schools]
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Announcements for active members of this school
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Announcement" } }
+    post:
+      operationId: publishAnnouncement
+      tags: [schools]
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnnouncementInput" }
+      responses:
+        "201":
+          description: Published and school members notified
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Announcement" }
+  /school-settings:
+    get:
+      operationId: getSchoolSettings
+      tags: [schools]
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: School settings for an authorised administrator
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/School" }
+    patch:
+      operationId: updateSchoolSettings
+      tags: [schools]
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SchoolSettingsInput" }
+      responses:
+        "200":
+          description: Updated settings; verification cannot be self-assigned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/School" }
   /dashboard:
     get:
       operationId: getDashboard
-      tags: [dashboard]
-      summary: Get live counts for the user's current school
+      tags: [schools]
+      summary: Live counts for the active school
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
       responses:
         "200":
-          description: School dashboard counts
+          description: Dashboard
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DashboardSummary" }
+        "403": { $ref: "#/components/responses/Error" }
+  /academic-years:
+    get:
+      operationId: listAcademicYears
+      tags: [academics]
+      summary: Academic years and their terms
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Academic years
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DashboardSummary"
+                type: array
+                items: { $ref: "#/components/schemas/AcademicYear" }
+    post:
+      operationId: createAcademicYear
+      tags: [academics]
+      summary: Add an academic year
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcademicYearInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicYear" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /academic-years/{academicYearId}/current:
+    post:
+      operationId: setCurrentAcademicYear
+      tags: [academics]
+      summary: Make this the current academic year
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: academicYearId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcademicYear" }
+        "404": { $ref: "#/components/responses/Error" }
+  /academic-years/{academicYearId}/terms:
+    post:
+      operationId: createTerm
+      tags: [academics]
+      summary: Add a term to an academic year
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: academicYearId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TermInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Term" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /terms/{termId}/current:
+    post:
+      operationId: setCurrentTerm
+      tags: [academics]
+      summary: Make this the current term
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: termId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Term" }
+        "404": { $ref: "#/components/responses/Error" }
+  /classes:
+    get:
+      operationId: listClasses
+      tags: [academics]
+      summary: Classes visible to the caller (teachers see assigned classes only)
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Classes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ClassRecord" }
+    post:
+      operationId: createClass
+      tags: [academics]
+      summary: Create a class or stream
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClassInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClassRecord" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /classes/{classId}/teachers:
+    post:
+      operationId: assignTeacher
+      tags: [academics]
+      summary: Assign a teacher to a class
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: classId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeacherAssignmentInput" }
+      responses:
+        "201":
+          description: Assigned
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherAssignment" }
+        "400": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /classes/{classId}/teachers/{assignmentId}:
+    delete:
+      operationId: removeTeacherAssignment
+      tags: [academics]
+      summary: Remove a teacher assignment
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: classId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Removed }
+        "404": { $ref: "#/components/responses/Error" }
   /students:
     get:
       operationId: listStudents
       tags: [students]
-      summary: Search and list students
+      summary: Search students visible to the caller
       parameters:
-        - in: query
-          name: search
-          schema:
-            type: string
-        - in: query
-          name: classId
-          schema:
-            type: string
-            format: uuid
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - in: query
-          name: pageSize
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: classId, schema: { type: string, format: uuid } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: pageSize, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
       responses:
         "200":
-          description: Paginated students for the current school
+          description: Students page
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/StudentPage"
+              schema: { $ref: "#/components/schemas/StudentPage" }
     post:
       operationId: createStudent
       tags: [students]
       summary: Register a student
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/StudentInput"
+            schema: { $ref: "#/components/schemas/StudentInput" }
       responses:
         "201":
-          description: Student created
+          description: Created
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Student"
+              schema: { $ref: "#/components/schemas/Student" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
   /students/{studentId}:
+    get:
+      operationId: getStudent
+      tags: [students]
+      summary: Student record with guardians
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: studentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Student
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StudentDetail" }
+        "404": { $ref: "#/components/responses/Error" }
     patch:
       operationId: updateStudent
       tags: [students]
       summary: Update a student record
       parameters:
-        - in: path
-          name: studentId
-          required: true
-          schema:
-            type: string
-            format: uuid
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: studentId, required: true, schema: { type: string, format: uuid } }
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/StudentUpdate"
+            schema: { $ref: "#/components/schemas/StudentUpdate" }
       responses:
         "200":
-          description: Updated student
+          description: Updated
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/Student"
-        "404":
-          description: Student not found in current school
-  /classes:
-    get:
-      operationId: listClasses
-      tags: [classes]
-      summary: List classes in the current school
-      responses:
-        "200":
-          description: Classes with student counts
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/ClassRecord"
+              schema: { $ref: "#/components/schemas/Student" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /students/{studentId}/guardians:
     post:
-      operationId: createClass
-      tags: [classes]
-      summary: Create a class or stream
+      operationId: addGuardian
+      tags: [students]
+      summary: Add a parent or guardian to a student
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: studentId, required: true, schema: { type: string, format: uuid } }
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/ClassInput"
+            schema: { $ref: "#/components/schemas/GuardianInput" }
       responses:
         "201":
-          description: Class created
+          description: Linked
           content:
             application/json:
-              schema:
-                $ref: "#/components/schemas/ClassRecord"
+              schema: { $ref: "#/components/schemas/GuardianLink" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /students/{studentId}/guardians/{guardianId}:
+    delete:
+      operationId: removeGuardian
+      tags: [students]
+      summary: Unlink a guardian from a student
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: studentId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: guardianId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Unlinked }
+        "404": { $ref: "#/components/responses/Error" }
   /attendance:
     get:
-      operationId: listAttendance
+      operationId: getAttendanceRegister
       tags: [attendance]
-      summary: Get a class register for one date
+      summary: Class register for one date (roster with any saved marks)
       parameters:
-        - in: query
-          name: date
-          required: true
-          schema:
-            type: string
-            format: date
-        - in: query
-          name: classId
-          schema:
-            type: string
-            format: uuid
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: date, required: true, schema: { $ref: "#/components/schemas/CalendarDate" } }
+        - { in: query, name: classId, required: true, schema: { type: string, format: uuid } }
       responses:
         "200":
-          description: Attendance records for the date
+          description: Register
           content:
             application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AttendanceRecord"
+              schema: { $ref: "#/components/schemas/AttendanceRegister" }
+        "404": { $ref: "#/components/responses/Error" }
     post:
       operationId: saveAttendance
       tags: [attendance]
       summary: Record or update attendance for a class
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
       requestBody:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/AttendanceInput"
+            schema: { $ref: "#/components/schemas/AttendanceInput" }
       responses:
         "200":
-          description: Saved attendance records
+          description: Saved register
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttendanceRegister" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /members:
+    get:
+      operationId: listMembers
+      tags: [members]
+      summary: People with access to the school
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Members
           content:
             application/json:
               schema:
                 type: array
-                items:
-                  $ref: "#/components/schemas/AttendanceRecord"
+                items: { $ref: "#/components/schemas/Member" }
+  /members/{membershipId}:
+    patch:
+      operationId: updateMember
+      tags: [members]
+      summary: Suspend or reactivate a membership
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: membershipId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MemberUpdate" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Member" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /members/{membershipId}/capabilities:
+    patch:
+      operationId: setMemberCapabilities
+      tags: [members]
+      summary: Replace a co-administrator's delegated capabilities (owner only)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: membershipId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MemberCapabilitiesInput" }
+      responses:
+        "200":
+          description: Updated delegation; enforced on subsequent requests
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Member" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /invitations:
+    get:
+      operationId: listInvitations
+      tags: [members]
+      summary: Pending and past invitations
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Invitations
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Invitation" }
+    post:
+      operationId: createInvitation
+      tags: [members]
+      summary: Invite someone to a school role
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/InvitationInput" }
+      responses:
+        "201":
+          description: Invitation created. The link is returned once and is not stored.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedInvitation" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+  /invitations/{invitationId}/revoke:
+    post:
+      operationId: revokeInvitation
+      tags: [members]
+      summary: Revoke a pending invitation
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: invitationId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Revoked
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Invitation" }
+        "404": { $ref: "#/components/responses/Error" }
+  /invitations/accept:
+    post:
+      operationId: acceptInvitation
+      tags: [members]
+      summary: Accept an invitation as the signed-in user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AcceptInvitationInput" }
+      responses:
+        "200":
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AcceptedInvitation" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /portal/children:
+    get:
+      operationId: listMyChildren
+      tags: [portal]
+      summary: Children linked to the signed-in parent, with recent attendance
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Children
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LearnerSummary" }
+  /portal/learner:
+    get:
+      operationId: getMyLearnerRecord
+      tags: [portal]
+      summary: The signed-in learner's own record and recent attendance
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Learner
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LearnerSummary" }
+        "404": { $ref: "#/components/responses/Error" }
+  /platform/schools:
+    get:
+      operationId: listPlatformSchools
+      tags: [platform]
+      summary: All schools (platform staff only)
+      responses:
+        "200":
+          description: Schools
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/PlatformSchool" }
+        "403": { $ref: "#/components/responses/Error" }
 components:
+  securitySchemes:
+    FirebaseBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Firebase ID token for the configured project.
+  parameters:
+    SchoolId:
+      in: header
+      name: X-School-Id
+      required: true
+      description: The school the caller is acting in.
+      schema: { type: string, format: uuid }
+  responses:
+    Error:
+      description: Error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorEnvelope" }
   schemas:
+    ErrorEnvelope:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, requestId]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            requestId: { type: string }
     HealthStatus:
       type: object
+      required: [status]
       properties:
-        status:
-          type: string
-      required:
-        - status
+        status: { type: string }
+    CalendarDate:
+      type: string
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: Calendar date (YYYY-MM-DD), no timezone.
+    SchoolRole:
+      type: string
+      enum: [owner, school_admin, principal, academic_admin, bursar, teacher, parent, student, tutor]
+    SchoolCapability:
+      type: string
+      enum: [students.manage, academics.manage, attendance.manage, people.manage, requests.review, settings.manage, announcements.manage, assessments.manage, results.publish, resources.manage, records.delete]
+    MemberCapabilitiesInput:
+      type: object
+      additionalProperties: false
+      required: [capabilities]
+      properties:
+        capabilities:
+          type: array
+          maxItems: 11
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/SchoolCapability" }
+    PlatformRole:
+      type: string
+      enum: [platform_admin, platform_support]
+    Me:
+      type: object
+      required: [authUserId, fullName, email, platformRole, schools]
+      properties:
+        authUserId: { type: string }
+        fullName: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        platformRole:
+          oneOf: [{ $ref: "#/components/schemas/PlatformRole" }, { type: "null" }]
+        schools:
+          type: array
+          items: { $ref: "#/components/schemas/SchoolAccess" }
+    SchoolAccess:
+      type: object
+      required: [schoolId, schoolName, roles, capabilities]
+      properties:
+        schoolId: { type: string, format: uuid }
+        schoolName: { type: string }
+        roles:
+          type: array
+          items: { $ref: "#/components/schemas/SchoolRole" }
+        capabilities:
+          type: array
+          items: { $ref: "#/components/schemas/SchoolCapability" }
     SchoolInput:
       type: object
       additionalProperties: false
-      required: [name, category, curriculum]
+      required: [name, category, curriculum, academicYear]
       properties:
         name: { type: string, minLength: 2, maxLength: 160 }
         category: { type: string, enum: [primary, secondary, mixed, tertiary, other] }
         curriculum: { type: string, minLength: 2, maxLength: 80 }
         county: { type: ["string", "null"], maxLength: 100 }
+        country: { type: string, minLength: 2, maxLength: 100 }
+        town: { type: ["string", "null"], maxLength: 100 }
+        logoUrl: { type: ["string", "null"], maxLength: 2048, pattern: "^https?://" }
+        description: { type: ["string", "null"], maxLength: 2000 }
+        contactEmail: { type: ["string", "null"], format: email, maxLength: 254 }
+        contactPhone: { type: ["string", "null"], maxLength: 30, pattern: "^\\+?[0-9 ()-]{7,30}$" }
+        website: { type: ["string", "null"], maxLength: 2048, pattern: "^https?://" }
+        discoverable: { type: boolean }
+        academicYear: { $ref: "#/components/schemas/AcademicYearInput" }
     School:
       type: object
-      required: [id, name, category, curriculum, createdAt]
+      required: [id, name, category, curriculum, county, createdAt, country, town, logoUrl, description, contactEmail, contactPhone, website, discoverable, verificationStatus]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         category: { type: string }
         curriculum: { type: string }
         county: { type: ["string", "null"] }
+        country: { type: string }
+        town: { type: ["string", "null"] }
+        logoUrl: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        contactEmail: { type: ["string", "null"] }
+        contactPhone: { type: ["string", "null"] }
+        website: { type: ["string", "null"] }
+        discoverable: { type: boolean }
+        verificationStatus: { type: string, enum: [unverified, verified] }
         createdAt: { type: string, format: date-time }
-    SchoolMembership:
-      type: object
-      required: [id, schoolId, schoolName, role, status]
-      properties:
-        id: { type: string, format: uuid }
-        schoolId: { type: string, format: uuid }
-        schoolName: { type: string }
-        role:
-          type: string
-          enum: [owner, school_admin, principal, academic_admin, bursar, teacher, parent, student, tutor, platform_admin]
-        status: { type: string, enum: [active, invited, suspended] }
-    SchoolContext:
-      type: object
-      required: [userId, memberships]
-      properties:
-        userId: { type: string }
-        fullName: { type: ["string", "null"] }
-        email: { type: ["string", "null"] }
-        memberships:
-          type: array
-          items: { $ref: "#/components/schemas/SchoolMembership" }
     DashboardSummary:
       type: object
-      required: [school, totalStudents, totalClasses, totalTeachers, presentToday, absentToday, attendanceRate]
+      required: [school, currentYear, currentTerm, totalStudents, totalClasses, totalTeachers, markedToday, presentToday, absentToday, attendanceRate]
       properties:
-        school: { oneOf: [{ $ref: "#/components/schemas/School" }, { type: "null" }] }
+        school: { $ref: "#/components/schemas/School" }
+        currentYear: { type: ["string", "null"] }
+        currentTerm: { type: ["string", "null"] }
         totalStudents: { type: integer }
         totalClasses: { type: integer }
         totalTeachers: { type: integer }
+        markedToday: { type: integer }
         presentToday: { type: integer }
         absentToday: { type: integer }
-        attendanceRate: { type: number }
+        attendanceRate: { type: ["number", "null"] }
+    AcademicYearInput:
+      type: object
+      additionalProperties: false
+      required: [name, startsOn, endsOn]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 40 }
+        startsOn: { $ref: "#/components/schemas/CalendarDate" }
+        endsOn: { $ref: "#/components/schemas/CalendarDate" }
+    AcademicYear:
+      type: object
+      required: [id, name, startsOn, endsOn, isCurrent, terms]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        startsOn: { type: string }
+        endsOn: { type: string }
+        isCurrent: { type: boolean }
+        terms:
+          type: array
+          items: { $ref: "#/components/schemas/Term" }
+    TermInput:
+      type: object
+      additionalProperties: false
+      required: [name, startsOn, endsOn]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 40 }
+        startsOn: { $ref: "#/components/schemas/CalendarDate" }
+        endsOn: { $ref: "#/components/schemas/CalendarDate" }
+    Term:
+      type: object
+      required: [id, academicYearId, name, startsOn, endsOn, isCurrent]
+      properties:
+        id: { type: string, format: uuid }
+        academicYearId: { type: string, format: uuid }
+        name: { type: string }
+        startsOn: { type: string }
+        endsOn: { type: string }
+        isCurrent: { type: boolean }
     ClassInput:
       type: object
       additionalProperties: false
-      required: [name, grade, academicYear]
+      required: [name, grade, academicYearId]
       properties:
         name: { type: string, minLength: 1, maxLength: 100 }
         grade: { type: string, minLength: 1, maxLength: 40 }
         stream: { type: ["string", "null"], maxLength: 40 }
-        academicYear: { type: string, minLength: 4, maxLength: 20 }
+        academicYearId: { type: string, format: uuid }
     ClassRecord:
       type: object
-      required: [id, name, grade, stream, academicYear, studentCount]
+      required: [id, name, grade, stream, academicYearId, academicYear, studentCount, teachers]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         grade: { type: string }
         stream: { type: ["string", "null"] }
+        academicYearId: { type: string, format: uuid }
         academicYear: { type: string }
         studentCount: { type: integer }
+        teachers:
+          type: array
+          items: { $ref: "#/components/schemas/TeacherAssignment" }
+    TeacherAssignmentInput:
+      type: object
+      additionalProperties: false
+      required: [teacherUserId, assignmentRole]
+      properties:
+        teacherUserId: { type: string, minLength: 1, maxLength: 64 }
+        assignmentRole: { type: string, enum: [class_teacher, subject_teacher] }
+        subject: { type: ["string", "null"], minLength: 1, maxLength: 80 }
+    TeacherAssignment:
+      type: object
+      required: [id, teacherUserId, teacherName, assignmentRole, subject]
+      properties:
+        id: { type: string, format: uuid }
+        teacherUserId: { type: string }
+        teacherName: { type: ["string", "null"] }
+        assignmentRole: { type: string, enum: [class_teacher, subject_teacher] }
+        subject: { type: ["string", "null"] }
     StudentInput:
       type: object
       additionalProperties: false
@@ -321,9 +944,6 @@ components:
         lastName: { type: string, minLength: 1, maxLength: 80 }
         admissionNumber: { type: string, minLength: 1, maxLength: 40 }
         classId: { type: ["string", "null"], format: uuid }
-        guardianName: { type: ["string", "null"], maxLength: 160 }
-        guardianEmail: { type: ["string", "null"], format: email }
-        guardianPhone: { type: ["string", "null"], maxLength: 40 }
         status: { type: string, enum: [active, transferred, graduated, inactive], default: active }
     StudentUpdate:
       type: object
@@ -333,13 +953,10 @@ components:
         lastName: { type: string, minLength: 1, maxLength: 80 }
         admissionNumber: { type: string, minLength: 1, maxLength: 40 }
         classId: { type: ["string", "null"], format: uuid }
-        guardianName: { type: ["string", "null"], maxLength: 160 }
-        guardianEmail: { type: ["string", "null"], format: email }
-        guardianPhone: { type: ["string", "null"], maxLength: 40 }
         status: { type: string, enum: [active, transferred, graduated, inactive] }
     Student:
       type: object
-      required: [id, firstName, lastName, admissionNumber, classId, className, guardianName, guardianEmail, guardianPhone, status, createdAt]
+      required: [id, firstName, lastName, admissionNumber, classId, className, status, hasAccount, guardianCount, createdAt]
       properties:
         id: { type: string, format: uuid }
         firstName: { type: string }
@@ -347,11 +964,24 @@ components:
         admissionNumber: { type: string }
         classId: { type: ["string", "null"] }
         className: { type: ["string", "null"] }
-        guardianName: { type: ["string", "null"] }
-        guardianEmail: { type: ["string", "null"] }
-        guardianPhone: { type: ["string", "null"] }
-        status: { type: string }
+        status: { type: string, enum: [active, transferred, graduated, inactive] }
+        hasAccount: { type: boolean }
+        guardianCount:
+          type: ["integer", "null"]
+          description: Null when the caller's role cannot see guardian records.
         createdAt: { type: string, format: date-time }
+    StudentDetail:
+      allOf:
+        - { $ref: "#/components/schemas/Student" }
+        - type: object
+          required: [guardians]
+          properties:
+            guardians:
+              description: Null when the caller's role cannot see guardian records.
+              oneOf:
+                - type: array
+                  items: { $ref: "#/components/schemas/GuardianLink" }
+                - type: "null"
     StudentPage:
       type: object
       required: [items, total, page, pageSize]
@@ -362,13 +992,42 @@ components:
         total: { type: integer }
         page: { type: integer }
         pageSize: { type: integer }
+    GuardianInput:
+      type: object
+      additionalProperties: false
+      description: |
+        A guardian already on file at this school with the same email (or,
+        without an email, the same phone) and the same name is reused, so
+        siblings share one parent record and one parent account. A matching
+        email or phone under a different name is rejected with 409.
+      required: [fullName, relationship]
+      properties:
+        fullName: { type: string, minLength: 2, maxLength: 160 }
+        email: { type: ["string", "null"], format: email, maxLength: 254 }
+        phone: { type: ["string", "null"], pattern: "^\\+?[0-9 ]{7,20}$" }
+        relationship: { type: string, enum: [mother, father, guardian, grandparent, sibling, sponsor, other] }
+        isPrimary: { type: boolean, default: false }
+    GuardianLink:
+      type: object
+      required: [guardianId, fullName, email, phone, relationship, isPrimary, hasAccount]
+      properties:
+        guardianId: { type: string, format: uuid }
+        fullName: { type: string }
+        email: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        relationship: { type: string }
+        isPrimary: { type: boolean }
+        hasAccount: { type: boolean }
+    AttendanceStatus:
+      type: string
+      enum: [present, absent, late, excused]
     AttendanceInput:
       type: object
       additionalProperties: false
       required: [classId, date, records]
       properties:
         classId: { type: string, format: uuid }
-        date: { type: string, format: date }
+        date: { $ref: "#/components/schemas/CalendarDate" }
         records:
           type: array
           minItems: 1
@@ -379,18 +1038,240 @@ components:
             required: [studentId, status]
             properties:
               studentId: { type: string, format: uuid }
-              status: { type: string, enum: [present, absent, late, excused] }
+              status: { $ref: "#/components/schemas/AttendanceStatus" }
               note: { type: ["string", "null"], maxLength: 500 }
-    AttendanceRecord:
+    AttendanceRegister:
       type: object
-      required: [id, studentId, studentName, admissionNumber, classId, date, status, note]
+      required: [classId, date, entries]
       properties:
-        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        date: { type: string }
+        entries:
+          type: array
+          items: { $ref: "#/components/schemas/AttendanceEntry" }
+    AttendanceEntry:
+      type: object
+      required: [studentId, studentName, admissionNumber, status, note]
+      properties:
         studentId: { type: string, format: uuid }
         studentName: { type: string }
         admissionNumber: { type: string }
-        classId: { type: string, format: uuid }
-        date: { type: string, format: date }
-        status: { type: string, enum: [present, absent, late, excused] }
+        status:
+          oneOf: [{ $ref: "#/components/schemas/AttendanceStatus" }, { type: "null" }]
         note: { type: ["string", "null"] }
-
+    Member:
+      type: object
+      required: [membershipId, authUserId, fullName, email, role, status, createdAt, capabilities]
+      properties:
+        membershipId: { type: string, format: uuid }
+        authUserId: { type: string }
+        fullName: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        role: { $ref: "#/components/schemas/SchoolRole" }
+        status: { type: string, enum: [active, suspended] }
+        createdAt: { type: string, format: date-time }
+        capabilities:
+          type: array
+          items: { $ref: "#/components/schemas/SchoolCapability" }
+    MemberUpdate:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: { type: string, enum: [active, suspended] }
+    InvitationInput:
+      type: object
+      additionalProperties: false
+      required: [email, role]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        role: { $ref: "#/components/schemas/SchoolRole" }
+        studentId: { type: ["string", "null"], format: uuid }
+        guardianId: { type: ["string", "null"], format: uuid }
+    Invitation:
+      type: object
+      required: [id, email, role, status, expiresAt, createdAt, studentName, guardianName]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string }
+        role: { $ref: "#/components/schemas/SchoolRole" }
+        status: { type: string, enum: [pending, accepted, revoked, expired] }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        studentName: { type: ["string", "null"] }
+        guardianName: { type: ["string", "null"] }
+    CreatedInvitation:
+      type: object
+      required: [invitation, acceptPath]
+      properties:
+        invitation: { $ref: "#/components/schemas/Invitation" }
+        acceptPath:
+          type: string
+          description: Relative link containing the one-time token. Share it with the invitee.
+    AcceptInvitationInput:
+      type: object
+      additionalProperties: false
+      required: [token]
+      properties:
+        token: { type: string, minLength: 20, maxLength: 200 }
+    AcceptedInvitation:
+      type: object
+      required: [schoolId, role]
+      properties:
+        schoolId: { type: string, format: uuid }
+        role: { $ref: "#/components/schemas/SchoolRole" }
+    LearnerSummary:
+      type: object
+      required: [studentId, firstName, lastName, admissionNumber, className, status, attendance]
+      properties:
+        studentId: { type: string, format: uuid }
+        firstName: { type: string }
+        lastName: { type: string }
+        admissionNumber: { type: string }
+        className: { type: ["string", "null"] }
+        status: { type: string }
+        attendance: { $ref: "#/components/schemas/AttendanceSummary" }
+    AttendanceSummary:
+      type: object
+      required: [sinceDate, present, absent, late, excused, recent]
+      properties:
+        sinceDate: { type: string }
+        present: { type: integer }
+        absent: { type: integer }
+        late: { type: integer }
+        excused: { type: integer }
+        recent:
+          type: array
+          items:
+            type: object
+            required: [date, status]
+            properties:
+              date: { type: string }
+              status: { $ref: "#/components/schemas/AttendanceStatus" }
+    PlatformSchool:
+      type: object
+      required: [id, name, category, county, createdAt, activeMembers, activeStudents]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string }
+        county: { type: ["string", "null"] }
+        createdAt: { type: string, format: date-time }
+        activeMembers: { type: integer }
+        activeStudents: { type: integer }
+    DirectorySchool:
+      type: object
+      required: [id, name, category, country, county, town, logoUrl, description, verificationStatus]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        category: { type: string }
+        country: { type: string }
+        county: { type: ["string", "null"] }
+        town: { type: ["string", "null"] }
+        logoUrl: { type: ["string", "null"] }
+        description: { type: ["string", "null"] }
+        verificationStatus: { type: string, enum: [unverified, verified] }
+    JoinRequestRole:
+      type: string
+      enum: [student, teacher, school_admin, parent]
+    JoinRequestInput:
+      type: object
+      additionalProperties: false
+      required: [requestedRole, fullName]
+      properties:
+        requestedRole: { $ref: "#/components/schemas/JoinRequestRole" }
+        fullName: { type: string, minLength: 2, maxLength: 160 }
+        admissionNumber: { type: string, maxLength: 40 }
+        programme: { type: string, maxLength: 160 }
+        academicYear: { type: string, maxLength: 40 }
+        staffNumber: { type: string, maxLength: 80 }
+        department: { type: string, maxLength: 160 }
+        subjects: { type: string, maxLength: 500 }
+        classes: { type: string, maxLength: 500 }
+        position: { type: string, maxLength: 160 }
+        reason: { type: string, maxLength: 1000 }
+        relationship: { type: string, maxLength: 80 }
+    JoinRequest:
+      type: object
+      required: [id, schoolId, authUserId, requestedRole, schoolName, applicantName, applicantEmail, applicantDetails, status, submittedAt, reviewedByUserId, reviewedAt, rejectionReason, studentId, guardianId]
+      properties:
+        id: { type: string, format: uuid }
+        schoolId: { type: string, format: uuid }
+        authUserId: { type: string }
+        requestedRole: { $ref: "#/components/schemas/JoinRequestRole" }
+        schoolName: { type: string }
+        applicantName: { type: string }
+        applicantEmail: { type: string }
+        applicantDetails:
+          type: object
+          additionalProperties: { type: string }
+        status: { type: string, enum: [pending, approved, rejected] }
+        submittedAt: { type: string, format: date-time }
+        reviewedByUserId: { type: ["string", "null"] }
+        reviewedAt: { type: ["string", "null"], format: date-time }
+        rejectionReason: { type: ["string", "null"] }
+        studentId: { type: ["string", "null"], format: uuid }
+        guardianId: { type: ["string", "null"], format: uuid }
+    JoinRequestReview:
+      type: object
+      additionalProperties: false
+      required: [decision]
+      properties:
+        decision: { type: string, enum: [approved, rejected] }
+        reason: { type: ["string", "null"], minLength: 3, maxLength: 500 }
+        studentId: { type: ["string", "null"], format: uuid }
+        guardianId: { type: ["string", "null"], format: uuid }
+    SchoolInvitationInput:
+      type: object
+      additionalProperties: false
+      required: [token, role]
+      properties:
+        token: { type: string, minLength: 20, maxLength: 256, pattern: "^[A-Za-z0-9_-]+$" }
+        role: { $ref: "#/components/schemas/JoinRequestRole" }
+    Notification:
+      type: object
+      required: [id, schoolId, type, title, body, entityId, createdAt, readAt]
+      properties:
+        id: { type: string, format: uuid }
+        schoolId: { type: string, format: uuid }
+        type: { type: string }
+        title: { type: string }
+        body: { type: string }
+        entityId: { type: ["string", "null"], format: uuid }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: ["string", "null"], format: date-time }
+    AnnouncementInput:
+      type: object
+      additionalProperties: false
+      required: [title, body]
+      properties:
+        title: { type: string, minLength: 2, maxLength: 160 }
+        body: { type: string, minLength: 1, maxLength: 5000 }
+    Announcement:
+      type: object
+      required: [id, schoolId, authorUserId, title, body, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        schoolId: { type: string, format: uuid }
+        authorUserId: { type: string }
+        title: { type: string }
+        body: { type: string }
+        createdAt: { type: string, format: date-time }
+    SchoolSettingsInput:
+      type: object
+      additionalProperties: false
+      required: [name, category, curriculum, country, discoverable]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 160 }
+        category: { type: string, enum: [primary, secondary, mixed, tertiary, other] }
+        curriculum: { type: string, minLength: 2, maxLength: 80 }
+        county: { type: ["string", "null"], maxLength: 100 }
+        country: { type: string, minLength: 2, maxLength: 100 }
+        town: { type: ["string", "null"], maxLength: 100 }
+        logoUrl: { type: ["string", "null"], maxLength: 2048, pattern: "^https?://" }
+        description: { type: ["string", "null"], maxLength: 2000 }
+        contactEmail: { type: ["string", "null"], format: email, maxLength: 254 }
+        contactPhone: { type: ["string", "null"], maxLength: 30, pattern: "^\\+?[0-9 ()-]{7,30}$" }
+        website: { type: ["string", "null"], maxLength: 2048, pattern: "^https?://" }
+        discoverable: { type: boolean }

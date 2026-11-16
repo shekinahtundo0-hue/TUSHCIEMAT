@@ -1,0 +1,575 @@
+/* RESPONSIVE DESIGN UTILITIES FOR TUSHCIEMAT
+   These utilities should be imported in index.css or added as @layer components
+   They provide responsive behavior for the application at these breakpoints:
+   - xs: 320-374px (small phones)
+   - sm: 375-600px (standard phones) - Tailwind default: 640px
+   - md: 601-900px (tablets) - Tailwind default: 768px
+   - lg: 901-1280px (laptops) - Tailwind default: 1024px
+   - xl: 1281-1600px (desktops) - Tailwind default: 1280px
+   - 2xl: 1601px+ (large displays) - Tailwind default: 1536px
+*/
+
+@layer components {
+  /* RESPONSIVE DASHBOARD GRIDS */
+  .metrics-grid {
+    @apply grid grid-cols-1 gap-4;
+    @apply sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .dashboard-columns {
+    @apply grid grid-cols-1 gap-6;
+    @apply lg:grid-cols-2 xl:grid-cols-3;
+  }
+
+  .quick-list {
+    @apply flex flex-col gap-3;
+  }
+
+  /* RESPONSIVE FORM LAYOUTS */
+  .form-row {
+    @apply grid grid-cols-1 gap-4;
+    @apply sm:grid-cols-2;
+  }
+
+  .form-row.full {
+    @apply sm:col-span-2;
+  }
+
+  /* RESPONSIVE MODAL ACTIONS */
+  .modal-actions {
+    @apply flex flex-col gap-2;
+    @apply sm:flex-row sm:justify-end;
+  }
+
+  /* RESPONSIVE TABLE WRAPPER */
+  .table-wrap {
+    @apply overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0 sm:overflow-x-visible;
+    @apply border rounded-lg;
+  }
+
+  .data-table {
+    @apply w-full text-sm;
+    @apply border-collapse;
+  }
+
+  .data-table th {
+    @apply px-3 py-2 sm:px-4 sm:py-3 text-left font-semibold;
+    @apply bg-secondary text-secondary-foreground;
+    @apply whitespace-nowrap;
+    @apply sticky top-0 z-20;
+    @apply shadow-sm;
+  }
+
+  .data-table td {
+    @apply px-3 py-2 sm:px-4 sm:py-3;
+    @apply border-b border-border;
+  }
+
+  .data-table tbody tr {
+    @apply hover:bg-muted transition-colors duration-150;
+  }
+
+  .data-table tbody tr:active {
+    @apply bg-muted;
+  }
+
+  /* MOBILE TABLE CARD FALLBACK */
+  @media (max-width: 600px) {
+    .data-table thead {
+      @apply hidden;
+    }
+
+    .data-table tbody,
+    .data-table tr,
+    .data-table td {
+      @apply block w-full;
+    }
+
+    .data-table tr {
+      @apply mb-4 border border-border rounded-lg overflow-hidden;
+    }
+
+    .data-table td {
+      @apply block border-0 py-3 px-4;
+      @apply before:content-[attr(data-label)] before:font-semibold before:block before:mb-1 before:text-xs before:text-muted-foreground;
+      @apply padding-left: 50%;
+    }
+
+    .data-table td:before {
+      @apply content-[attr(data-label)];
+      @apply absolute left-0 px-4 py-3;
+      @apply w-32 font-semibold text-xs;
+      @apply text-muted-foreground;
+    }
+
+    /* Attendance table mobile card layout */
+    .attendance-table {
+      @apply min-w-full;
+    }
+
+    .attendance-table td {
+      @apply block py-2 px-3 border-0;
+    }
+
+    .attendance-table .student-cell {
+      @apply flex items-center gap-2;
+    }
+
+    .attendance-options {
+      @apply flex flex-wrap gap-1.5;
+    }
+
+    .attendance-choice {
+      @apply flex-grow basis-[calc(50%-0.375rem)] text-center;
+      @apply min-h-9 px-1 py-1.5 text-xs;
+    }
+  }
+
+  /* RESPONSIVE TABLE FOOTER */
+  .table-footer {
+    @apply flex flex-col gap-3 items-center justify-between p-3 sm:p-4;
+    @apply bg-secondary text-secondary-foreground rounded-lg;
+    @apply sm:flex-row;
+  }
+
+  .pagination {
+    @apply flex items-center gap-2;
+  }
+
+  /* RESPONSIVE SEARCH/TOOLBAR */
+  .records-toolbar {
+    @apply flex flex-col gap-3 mb-4;
+    @apply sm:flex-row sm:justify-between sm:items-center;
+  }
+
+  .search-field {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg border border-input bg-input;
+    @apply w-full sm:flex-1;
+  }
+
+  .search-field input {
+    @apply flex-1 bg-transparent border-none outline-none;
+    @apply min-w-0;
+  }
+
+  /* RESPONSIVE PANELS */
+  .panel {
+    @apply rounded-lg border border-border bg-card p-4 sm:p-6;
+    @apply shadow-sm transition-shadow duration-150;
+  }
+
+  .panel:hover {
+    @apply shadow-md;
+  }
+
+  .panel-heading {
+    @apply flex flex-col gap-2 mb-4;
+    @apply sm:flex-row sm:justify-between sm:items-start;
+  }
+
+  /* ELEVATION LAYERS */
+  .surface-base {
+    @apply bg-background;
+  }
+
+  .surface-raised {
+    @apply bg-card shadow-sm;
+  }
+
+  .surface-overlay {
+    @apply bg-popover shadow-lg;
+  }
+
+  .surface-dialog {
+    @apply bg-card shadow-xl;
+  }
+
+  /* CARDS WITH HOVER ELEVATION */
+  .card-interactive {
+    @apply rounded-lg border border-border bg-card p-4;
+    @apply shadow-sm transition-all duration-200;
+    @apply cursor-pointer;
+  }
+
+  .card-interactive:hover {
+    @apply shadow-md transform -translate-y-0.5;
+  }
+
+  .card-interactive:active {
+    @apply shadow-sm transform translate-y-0;
+  }
+
+  /* RESPONSIVE BUTTONS */
+  button {
+    @apply min-h-10 min-w-10; /* 40px touch target */
+    @apply transition-all duration-150 ease-out;
+  }
+
+  button.button-primary {
+    @apply px-3 py-2 sm:px-4 sm:py-2;
+    @apply text-sm sm:text-base font-medium;
+    @apply rounded-lg border border-transparent;
+    @apply transition-all duration-150 ease-out;
+    @apply focus:outline-2 focus:outline-offset-2;
+  }
+
+  button.button-primary:hover:not(:disabled) {
+    @apply shadow-md scale-[1.02];
+  }
+
+  button.button-primary:active:not(:disabled) {
+    @apply shadow-sm scale-[0.98];
+  }
+
+  button.button-primary:focus-visible:not(:disabled) {
+    @apply ring-2 ring-offset-2;
+  }
+
+  button.button-primary:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  button.button-outline {
+    @apply px-3 py-2 sm:px-4 sm:py-2;
+    @apply text-sm sm:text-base font-medium;
+    @apply rounded-lg border;
+    @apply transition-all duration-150 ease-out;
+  }
+
+  button.button-outline:hover:not(:disabled) {
+    @apply shadow-sm;
+  }
+
+  button.button-outline:active:not(:disabled) {
+    @apply shadow-none;
+  }
+
+  button.button-outline:focus-visible:not(:disabled) {
+    @apply ring-2 ring-offset-2;
+  }
+
+  button.button-outline:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* RESPONSIVE MODALS */
+  .modal-card {
+    @apply w-full max-h-[90vh] overflow-y-auto;
+    @apply mx-4 rounded-lg;
+    @apply sm:mx-auto sm:max-w-lg;
+    @apply md:max-w-xl;
+  }
+
+  .modal-heading {
+    @apply p-4 sm:p-6;
+    @apply border-b border-border;
+  }
+
+  .modal-heading button {
+    @apply p-1 rounded hover:bg-muted transition-colors;
+  }
+
+  /* RESPONSIVE PAGE HEADER */
+  .page-header {
+    @apply flex flex-col gap-4 mb-6;
+    @apply sm:flex-row sm:justify-between sm:items-start;
+    @apply md:items-end md:mb-8;
+  }
+
+  /* RESPONSIVE SECTIONS */
+  .dashboard-welcome {
+    @apply grid grid-cols-1 gap-4 mb-6;
+    @apply sm:gap-6 sm:mb-8;
+  }
+
+  /* RESPONSIVE DROPDOWNS & SELECTS */
+  select,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  textarea {
+    @apply px-3 py-2.5 rounded-lg border border-input;
+    @apply text-base; /* Prevents zoom on iOS */
+    @apply w-full;
+    @apply min-h-10; /* 40px tap target */
+    @apply transition-colors duration-150;
+  }
+
+  select:focus,
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="tel"]:focus,
+  input[type="number"]:focus,
+  textarea:focus {
+    @apply outline-none ring-2 ring-offset-0 border-transparent;
+  }
+
+  select:disabled,
+  input[type="text"]:disabled,
+  input[type="email"]:disabled,
+  input[type="tel"]:disabled,
+  input[type="number"]:disabled,
+  textarea:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* RESPONSIVE SIDEBAR */
+  .sidebar {
+    @apply fixed inset-0 z-50 w-full;
+    @apply md:static md:z-auto md:w-64 md:inset-auto;
+    @apply md:border-r md:border-border md:bg-sidebar;
+  }
+
+  .sidebar-scrim {
+    @apply fixed inset-0 z-40 bg-black/50;
+    @apply md:hidden;
+  }
+
+  /* RESPONSIVE WORKSPACE */
+  .workspace {
+    @apply flex flex-col w-full;
+  }
+
+  /* RESPONSIVE TOPBAR */
+  .topbar {
+    @apply flex items-center justify-between gap-4;
+    @apply px-4 py-3 sm:px-6 sm:py-4;
+    @apply border-b border-border;
+    @apply sticky top-0 z-40 bg-background;
+  }
+
+  .mobile-nav-toggle {
+    @apply p-2 rounded-lg hover:bg-muted;
+    @apply md:hidden;
+  }
+
+  .crumb {
+    @apply hidden flex-1 items-center gap-2 text-sm;
+    @apply sm:flex md:text-base;
+  }
+
+  .topbar-right {
+    @apply flex items-center gap-3 sm:gap-4;
+  }
+
+  /* RESPONSIVE CARD LAYOUTS */
+  .student-cell {
+    @apply flex items-center gap-2 min-w-0;
+  }
+
+  .student-initial {
+    @apply flex-shrink-0 flex items-center justify-center;
+    @apply w-8 h-8 sm:w-10 sm:h-10;
+    @apply rounded-lg bg-secondary text-secondary-foreground;
+    @apply text-xs sm:text-sm font-semibold;
+  }
+
+  .student-cell span {
+    @apply min-w-0;
+  }
+
+  .student-cell b {
+    @apply block truncate;
+  }
+
+  .student-cell small {
+    @apply block text-xs text-muted-foreground;
+  }
+
+  /* RESPONSIVE EMPTY/ERROR STATES */
+  .state-card {
+    @apply flex flex-col items-center justify-center gap-4;
+    @apply py-8 sm:py-12 md:py-16;
+    @apply text-center;
+  }
+
+  .state-card h3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+
+  .state-card p {
+    @apply max-w-xs text-sm text-muted-foreground;
+  }
+
+  /* RESPONSIVE STATS */
+  .metric-card {
+    @apply rounded-lg border border-border bg-card;
+    @apply p-3 sm:p-4 md:p-5;
+  }
+
+  .metric-value {
+    @apply text-2xl sm:text-3xl font-bold;
+    @apply my-2;
+  }
+
+  /* RESPONSIVE LISTS */
+  .guardian-list {
+    @apply flex flex-col gap-2;
+  }
+
+  .guardian-row {
+    @apply flex flex-col gap-2 p-3 rounded-lg border border-border;
+    @apply sm:flex-row sm:justify-between sm:items-start;
+  }
+
+  .row-actions {
+    @apply flex gap-2 flex-shrink-0;
+    @apply sm:justify-end;
+  }
+
+  /* RESPONSIVE INPUTS ON SMALL SCREENS */
+  @media (max-width: 374px) {
+    /* Extra small phone optimizations */
+    .sidebar {
+      @apply -left-full;
+    }
+
+    .sidebar-open {
+      @apply left-0;
+    }
+
+    .page-header h1 {
+      @apply text-2xl;
+    }
+
+    .metric-value {
+      @apply text-xl;
+    }
+
+    input,
+    select,
+    textarea {
+      @apply text-base; /* Prevents zoom on iOS when input focused */
+    }
+  }
+
+  /* RESPONSIVE FOR STANDARD PHONES */
+  @media (min-width: 375px) and (max-width: 600px) {
+    .page-header h1 {
+      @apply text-2xl sm:text-3xl;
+    }
+
+    .data-table {
+      @apply text-sm;
+    }
+
+    .data-table th {
+      @apply px-2 py-2;
+    }
+
+    .data-table td {
+      @apply px-2 py-2;
+    }
+  }
+
+  /* RESPONSIVE FOR TABLETS */
+  @media (min-width: 601px) and (max-width: 900px) {
+    .sidebar {
+      @apply w-56;
+    }
+
+    .metrics-grid {
+      @apply grid-cols-2;
+    }
+
+    .dashboard-columns {
+      @apply grid-cols-2;
+    }
+  }
+
+  /* RESPONSIVE FOR LARGE SCREENS */
+  @media (min-width: 1281px) {
+    .page-header {
+      @apply flex-row justify-between items-center;
+    }
+
+    .dashboard-columns {
+      @apply grid-cols-3;
+    }
+  }
+}
+
+/* TOUCH-FRIENDLY ADJUSTMENTS */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    @apply min-h-11 min-w-11; /* 44px minimum touch target */
+  }
+
+  /* Increase spacing between interactive elements */
+  button + button {
+    @apply ml-2;
+  }
+
+  /* Better spacing for touch on forms */
+  .form-row > * {
+    @apply mb-1;
+  }
+
+  /* Reduce motion for touch devices */
+  * {
+    @apply transition-none;
+  }
+
+  button:active,
+  a:active {
+    @apply opacity-75;
+  }
+}
+
+/* ANIMATIONS & TRANSITIONS */
+@layer utilities {
+  .transition-fast {
+    @apply transition-all duration-100 ease-out;
+  }
+
+  .transition-normal {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  .transition-slow {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .animate-fade-in {
+    @apply animate-in fade-in duration-200;
+  }
+
+  .animate-slide-in-from-left {
+    @apply animate-in slide-in-from-left-4 duration-300;
+  }
+
+  .animate-slide-in-from-top {
+    @apply animate-in slide-in-from-top-4 duration-300;
+  }
+
+  .scale-up-on-hover {
+    @apply hover:scale-105 transition-transform duration-150;
+  }
+
+  .lift-on-hover {
+    @apply hover:shadow-lg hover:-translate-y-1 transition-all duration-150;
+  }
+}
+
+/* PRINT STYLES - RESPONSIVE */
+@media print {
+  .topbar,
+  .sidebar,
+  .mobile-nav-toggle,
+  .modal-overlay,
+  button.button-quiet {
+    @apply hidden;
+  }
+
+  .workspace {
+    @apply static;
+  }
+
+  .page {
+    @apply p-0;
+  }
+}

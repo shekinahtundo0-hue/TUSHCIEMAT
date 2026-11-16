@@ -1,56 +1,96 @@
 # Tushciemat
 
-Tushciemat is a multi-school platform for Kenyan education, connecting school operations, academic progress, finance, digital learning and tutoring.
+Multi-school platform for Kenyan education. The authorized Clerk-to-Firebase
+migration changes authentication, not authorization to deploy or modify Supabase.
 
-## Run & Operate
+## Local setup and commands
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- `pnpm --filter @workspace/db run apply-policies` — apply tenant RLS and relationship checks
-- Required env: `DATABASE_URL` — Postgres connection string
+Copy the existing examples to gitignored `.env` files alongside them:
 
-## Stack
+- `artifacts/tushciemat/.env.example` → `artifacts/tushciemat/.env`: public
+  `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
+  `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` from the Firebase web app.
+- `artifacts/api-server/.env.example` → `artifacts/api-server/.env`: required
+  `PORT` (example: 8080), `DATABASE_URL` (runtime `tushciemat_api` connection),
+  `FIREBASE_PROJECT_ID=tushciemat-c4c14`; optional pool, CA, CORS, proxy, timezone
+  and invitation-TTL settings are described in the example.
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+Commands below are verified against package scripts, not a claim of successful
+execution or complete UI testing. Run from the repository root; keep DB, API and
+Vite in separate terminals.
 
-## Where things live
+| Command | Purpose |
+| --- | --- |
+| `pnpm typecheck` | Typecheck libraries, artifacts and scripts |
+| `pnpm --filter @workspace/api-server run test` | Local API/RLS tests with embedded PostgreSQL and locally signed JWTs |
+| `pnpm --filter @workspace/api-server run dev:db` | Start persistent local PostgreSQL (default 54329) and apply Drizzle migrations locally |
+| `pnpm --filter @workspace/api-server run dev` | Build/start API; loads its `.env`, example port 8080 |
+| `pnpm --filter @workspace/tushciemat run dev` | Vite, default port 5173; proxies `/api` to localhost:8080 |
+| `pnpm run build` | Typecheck and build workspace packages |
+| `pnpm --filter @workspace/api-spec run codegen` | Regenerate API clients and Zod schemas |
 
-- `artifacts/tushciemat` — responsive React app and school portals
-- `artifacts/api-server` — shared Express API and authentication middleware
-- `lib/api-spec/openapi.yaml` — API contract; regenerate clients after edits
-- `lib/db/src/schema/schools.ts` — school, membership, class, student, attendance and audit models
-- `lib/db/migrations/` — PostgreSQL tenant-isolation policies
-- `docs/architecture.md` — relationships, permission matrix and rollout phases
+The local DB script prints runtime and owner URLs: keep them private, put only
+the runtime URL in the API's `DATABASE_URL`, and never paste credentials into
+documentation or browser config. Its data/credentials live under gitignored
+`.local/dev-db`. Export `DEV_DB_PORT` for a DB port override; Vite's current config
+reads `API_PROXY_TARGET` and `PORT` from process environment, so export them for
+non-default proxy/port values (the example's proxy target matches the default).
 
-## Architecture decisions
+## Migration authority and deployment boundary
 
-- Clerk owns user authentication; Tushciemat stores school memberships and enforces app roles on the server.
-- PostgreSQL RLS supplements server authorization; protected transactions set the verified user and active school context.
-- School-level data is never seeded with fabricated records or metrics.
-- Payment and communication workflows require authorized provider integrations; initiated payments are not treated as confirmed.
+Drizzle SQL migrations plus `lib/db/migrations/meta/_journal.json` are the sole
+schema/RLS authority. Schema push and separate `apply-policies` are obsolete.
+`pnpm --filter @workspace/db run migrate` requires an exported
+`MIGRATION_DATABASE_URL` for the schema owner; it does not automatically load
+the API `.env`, and the API does not use that owner variable. Owner/service
+credentials must never reach browser bundles or documentation.
 
-## Product
+**Real Supabase migrations and deployment require separate explicit approval
+and are NOT done.** Do not run migration commands against a real project under
+this documentation-only task. The API uses the dedicated non-superuser
+`tushciemat_api` role without BYPASSRLS, never an owner/service-role connection.
 
-The initial release establishes secure school onboarding, student and class records, and attendance. Future phases add exams, finance, parent/student learning, tutoring and platform operations.
+## Authentication and tenant decisions
 
-## User preferences
+- Firebase web email/password and Google replace Clerk; API authentication is
+  Firebase ID bearer tokens, not cookies. Server `jose` verification uses Google's
+  public keys, RS256 only, project-pinned audience and issuer
+  `https://securetoken.google.com/<project-id>`. Firebase UID (`sub`) is identity.
+- Transactions set `request.jwt.claims` locally with `sub`. Active school is
+  selected by `X-School-Id`, checked against active memberships/roles within the
+  transaction, then applied to query filters; no separate PostgreSQL school
+  setting is currently set. RLS adds profile/role/relationship checks.
+- Firebase project is `tushciemat-c4c14`, separate from `turiwa-app`. Configure
+  authorized domains `localhost`, `127.0.0.1` and the deployment hostname, without
+  schemes/ports. Public Firebase web config identifies the app; it grants no
+  privileged access.
+- Verification/reset use Firebase-hosted email actions. Invitations use copied
+  links, not an integrated mail sender. There is no user lifecycle webhook or
+  service secret; local profiles sync from verified claims on requests.
+- Disabled/deleted Firebase accounts' issued tokens can last up to one hour:
+  verification does not check revocation/account state. Non-active
+  `user_profiles.status` immediately blocks subsequent protected requests.
+- No billing upgrade is part of this migration. Standard email/password and
+  Google Firebase Auth on Spark are no-cost within quotas; quotas matter, and
+  SMS or paid infrastructure would add costs and require separate authorization.
 
-- Product name: Tushciemat.
-- Build in phases; do not present fake school data or claim unconfigured integrations are live.
+## Stack and locations
 
-## Gotchas
+- pnpm workspaces, Node.js 24, TypeScript; React/Vite/Wouter web app in
+  `artifacts/tushciemat`, Express API with `jose` in `artifacts/api-server`.
+- PostgreSQL/Drizzle schemas in `lib/db/src/schema/`; migrations in
+  `lib/db/migrations/`; API builds with esbuild to `dist/index.mjs`.
+- `lib/api-spec/openapi.yaml` defines the Orval-generated clients/Zod contracts;
+  regenerate after edits. `docs/architecture.md` covers relationships and roles.
 
-- Re-run API code generation after changing `lib/api-spec/openapi.yaml`.
-- Apply the tenant-isolation SQL migration after pushing Drizzle schema changes.
+## Product and verification scope
 
-## Pointers
+Implemented: onboarding, invitations/acceptance/revocation, member role/status
+management, academic years/terms, classes/teacher assignments, student/guardian
+linking, attendance and linked parent/student portals. Finance, payments, AI,
+exams, learning resources and tutor services remain future work. Initiated
+payments are never treated as confirmed; unconfigured integrations are not live.
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+Local API/RLS tests do not prove live Firebase sign-in or all UI flows have been
+tested. Keep the product name Tushciemat, build in phases and never fabricate
+school records or metrics.

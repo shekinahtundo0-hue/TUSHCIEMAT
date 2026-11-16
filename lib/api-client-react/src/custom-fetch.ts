@@ -8,6 +8,8 @@ export type BodyType<T> = T;
 
 export type AuthTokenGetter = () => Promise<string | null> | string | null;
 
+export type SchoolIdGetter = () => string | null;
+
 const NO_BODY_STATUS = new Set([204, 205, 304]);
 const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
@@ -17,6 +19,7 @@ const DEFAULT_JSON_ACCEPT = "application/json, application/problem+json";
 
 let _baseUrl: string | null = null;
 let _authTokenGetter: AuthTokenGetter | null = null;
+let _schoolIdGetter: SchoolIdGetter | null = null;
 
 /**
  * Set a base URL that is prepended to every relative request URL
@@ -34,14 +37,15 @@ export function setBaseUrl(url: string | null): void {
  * the getter is invoked; when it returns a non-null string, an
  * `Authorization: Bearer <token>` header is attached to the request.
  *
- * Useful for Expo bundles making token-gated API calls.
  * Pass `null` to clear the getter.
- *
- * NOTE: This function should never be used in web applications where session
- * token cookies are automatically associated with API calls by the browser.
  */
 export function setAuthTokenGetter(getter: AuthTokenGetter | null): void {
   _authTokenGetter = getter;
+}
+
+/** Supplies the `X-School-Id` header for school-scoped requests. */
+export function setSchoolIdGetter(getter: SchoolIdGetter | null): void {
+  _schoolIdGetter = getter;
 }
 
 function isRequest(input: RequestInfo | URL): input is Request {
@@ -158,7 +162,10 @@ function buildErrorMessage(response: Response, data: unknown): string {
 
   const title = getStringField(data, "title");
   const detail = getStringField(data, "detail");
+  const envelope =
+    data && typeof data === "object" && "error" in data ? data.error : null;
   const message =
+    getStringField(envelope, "message") ??
     getStringField(data, "message") ??
     getStringField(data, "error_description") ??
     getStringField(data, "error");
@@ -347,6 +354,11 @@ export async function customFetch<T = unknown>(
 
   if (responseType === "json" && !headers.has("accept")) {
     headers.set("accept", DEFAULT_JSON_ACCEPT);
+  }
+
+  if (_schoolIdGetter && !headers.has("x-school-id")) {
+    const schoolId = _schoolIdGetter();
+    if (schoolId) headers.set("x-school-id", schoolId);
   }
 
   // Attach bearer token when an auth getter is configured and no

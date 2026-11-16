@@ -1,85 +1,138 @@
-import express, { type Express } from "express";
+import { randomUUID } from "node:crypto";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
-import { clerkMiddleware } from "@clerk/express";
-import { publishableKeyFromHost } from "@clerk/shared/keys";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
 import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
-import {
-  CLERK_PROXY_PATH,
-  clerkProxyMiddleware,
-  getClerkProxyHost,
-} from "./middlewares/clerkProxyMiddleware";
-import { SchoolAccessError } from "./lib/schoolAccess";
+import type { AppDeps } from "./lib/deps";
+import { AppError, toAppError } from "./lib/errors";
+import { authenticate } from "./middlewares/authenticate";
+import { academicRoutes } from "./modules/academics/routes";
+import { attendanceRoutes } from "./modules/attendance/routes";
+import { memberRoutes } from "./modules/members/routes";
+import { joiningRoutes } from "./modules/members/joining-routes";
+import { portalRoutes } from "./modules/portal/routes";
+import { schoolRoutes } from "./modules/schools/routes";
+import { studentRoutes } from "./modules/students/routes";
+import resultsRouter from "./modules/results/router";
+import resourcesRouter from "./modules/classroom/resources-router";
+import assignmentsRouter from "./modules/assignments/router";
+import timetableRouter from "./modules/classroom/timetable-router";
 
-const app: Express = express();
+const REQUEST_ID = /^[A-Za-z0-9._:-]{8,128}$/;
 
-app.use(
-  pinoHttp({
-    logger,
-    serializers: {
-      req(req) {
-        return {
-          id: req.id,
-          method: req.method,
-          url: req.url?.split("?")[0],
-        };
+function errorBody(req: Request, code: string, message: string) {
+  return { error: { code, message, requestId: String(req.id ?? "") } };
+}
+
+export function createApp(deps: AppDeps): Express {
+  const { config, database, logger } = deps;
+  const app = express();
+
+  app.set("trust proxy", config.trustProxy);
+  app.disable("x-powered-by");
+
+  app.use(
+    pinoHttp({
+      logger,
+      genReqId(req, res) {
+        const incoming = req.headers["x-request-id"];
+        const id = typeof incoming === "string" && REQUEST_ID.test(incoming) ? incoming : randomUUID();
+        res.setHeader("X-Request-Id", id);
+        return id;
       },
-      res(res) {
-        return {
-          statusCode: res.statusCode,
-        };
+      serializers: {
+        req: (req) => ({ id: req.id, method: req.method, url: req.url?.split("?")[0] }),
+        res: (res) => ({ statusCode: res.statusCode }),
       },
-    },
-  }),
-);
-app.use(CLERK_PROXY_PATH, clerkProxyMiddleware());
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+    }),
+  );
+  app.use(helmet());
 
-app.use(
-  clerkMiddleware((req) => ({
-    publishableKey: publishableKeyFromHost(
-      getClerkProxyHost(req) ?? "",
-      process.env.CLERK_PUBLISHABLE_KEY,
-    ),
-  })),
-);
+  const healthz = (_req: Request, res: Response) => {
+    res.json({ status: "ok" });
+  };
+  app.get("/api/healthz", healthz);
+  app.get("/api/v1/healthz", healthz);
+  app.get("/api/v1/readyz", async (req, res) => {
+    try {
+      await database.ping();
+      res.json({ status: "ready" });
+    } catch (error) {
+      req.log.error({ err: error }, "Readiness check failed");
+      res.status(503).json(errorBody(req, "not_ready", "The database is not reachable."));
+    }
+  });
 
-app.use("/api", router);
+  if (config.corsAllowedOrigins.length > 0) {
+    app.use(
+      "/api",
+      cors({
+        origin: config.corsAllowedOrigins,
+        credentials: true,
+        methods: ["GET", "POST", "PATCH", "DELETE"],
+        allowedHeaders: ["Authorization", "Content-Type", "X-School-Id", "X-Request-Id"],
+        exposedHeaders: ["X-Request-Id"],
+        maxAge: 600,
+      }),
+    );
+  }
 
-app.use(
-  (
-    error: unknown,
-    req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction,
-  ): void => {
-    if (error instanceof SchoolAccessError) {
-      res.status(error.statusCode).json({ error: error.message });
+  app.use(
+    "/api",
+    rateLimit({
+      windowMs: 60 * 1000,
+      limit: 300,
+      standardHeaders: "draft-8",
+      legacyHeaders: false,
+      handler: (_req, _res, next) =>
+        next(new AppError(429, "rate_limited", "Too many requests. Please slow down and try again.")),
+    }),
+  );
+
+  app.use(express.json({ limit: "100kb" }));
+
+  const v1 = express.Router();
+  v1.use(authenticate(deps));
+  v1.use(schoolRoutes(deps));
+  v1.use(academicRoutes(deps));
+  v1.use(studentRoutes(deps));
+  v1.use(attendanceRoutes(deps));
+  v1.use(memberRoutes(deps));
+  v1.use(joiningRoutes(deps));
+  v1.use(portalRoutes(deps));
+  v1.use("/results", resultsRouter(deps));
+  v1.use("/learning", resourcesRouter(deps));
+  v1.use("/assignments", assignmentsRouter(deps));
+  v1.use("/timetable", timetableRouter(deps));
+  app.use("/api/v1", v1);
+
+  app.use((req: Request, res: Response) => {
+    res.status(404).json(errorBody(req, "not_found", "No such endpoint."));
+  });
+
+  app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {
+    const parserType = (error as { type?: string } | null)?.type;
+    if (parserType === "entity.parse.failed") {
+      res.status(400).json(errorBody(req, "invalid_json", "The request body is not valid JSON."));
+      return;
+    }
+    if (parserType === "entity.too.large") {
+      res.status(413).json(errorBody(req, "payload_too_large", "The request body is too large."));
       return;
     }
 
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      (error.code === "23505" || error.code === "23503" || error.code === "23514")
-    ) {
-      const status = error.code === "23505" ? 409 : 400;
-      res.status(status).json({
-        error:
-          status === 409
-            ? "That record already exists."
-            : "The selected records do not belong together.",
-      });
+    const appError = toAppError(error);
+    if (appError) {
+      if (appError.status >= 500) req.log.error({ err: error }, appError.message);
+      else req.log.info({ code: appError.code, status: appError.status }, "Request rejected");
+      res.status(appError.status).json(errorBody(req, appError.code, appError.message));
       return;
     }
 
     req.log.error({ err: error }, "Unhandled API error");
-    res.status(500).json({ error: "Something went wrong. Please try again." });
-  },
-);
+    res.status(500).json(errorBody(req, "internal_error", "Something went wrong. Please try again."));
+  });
 
-export default app;
+  return app;
+}

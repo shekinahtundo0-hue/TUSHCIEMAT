@@ -1,6 +1,7 @@
-import { createInsertSchema } from "drizzle-zod";
+import { sql } from "drizzle-orm";
 import {
-  date,
+  boolean,
+  check,
   index,
   jsonb,
   pgEnum,
@@ -10,7 +11,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { z } from "zod/v4";
+import { userProfilesTable } from "./identity";
 
 export const schoolRoleEnum = pgEnum("school_role", [
   "owner",
@@ -22,27 +23,19 @@ export const schoolRoleEnum = pgEnum("school_role", [
   "parent",
   "student",
   "tutor",
-  "platform_admin",
 ]);
 
 export const membershipStatusEnum = pgEnum("membership_status", [
   "active",
-  "invited",
   "suspended",
 ]);
 
-export const studentStatusEnum = pgEnum("student_status", [
-  "active",
-  "transferred",
-  "graduated",
-  "inactive",
-]);
-
-export const attendanceStatusEnum = pgEnum("attendance_status", [
-  "present",
-  "absent",
-  "late",
-  "excused",
+export const schoolCategoryEnum = pgEnum("school_category", [
+  "primary",
+  "secondary",
+  "mixed",
+  "tertiary",
+  "other",
 ]);
 
 export const schoolsTable = pgTable(
@@ -51,16 +44,42 @@ export const schoolsTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     slug: text("slug").notNull(),
-    category: text("category").notNull(),
+    category: schoolCategoryEnum("category").notNull(),
     curriculum: text("curriculum").notNull(),
+    country: text("country").notNull().default("Kenya"),
     county: text("county"),
+    town: text("town"),
+    logoUrl: text("logo_url"),
+    description: text("description"),
+    contactEmail: text("contact_email"),
+    contactPhone: text("contact_phone"),
+    website: text("website"),
+    verificationStatus: text("verification_status").notNull().default("unverified"),
+    discoverable: boolean("discoverable").notNull().default(false),
+    createdByUserId: text("created_by_user_id")
+      .notNull()
+      .references(() => userProfilesTable.authUserId),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
   },
-  (table) => [uniqueIndex("schools_slug_unique").on(table.slug)],
+  (table) => [
+    uniqueIndex("schools_slug_unique").on(table.slug),
+    index("schools_created_by_idx").on(table.createdByUserId),
+    index("schools_directory_name_idx")
+      .on(sql`lower(btrim(regexp_replace(${table.name}, '[[:space:]]+', ' ', 'g')))`, table.id)
+      .where(sql`${table.discoverable}`),
+    check(
+      "schools_verification_status_check",
+      sql`${table.verificationStatus} IN ('unverified', 'verified')`,
+    ),
+  ],
 );
 
+// A person may hold several roles in one school (e.g. a teacher who is also a parent).
 export const schoolMembershipsTable = pgTable(
   "school_memberships",
   {
@@ -68,125 +87,29 @@ export const schoolMembershipsTable = pgTable(
     schoolId: uuid("school_id")
       .notNull()
       .references(() => schoolsTable.id, { onDelete: "cascade" }),
-    clerkUserId: text("clerk_user_id").notNull(),
+    authUserId: text("auth_user_id")
+      .notNull()
+      .references(() => userProfilesTable.authUserId),
     role: schoolRoleEnum("role").notNull(),
     status: membershipStatusEnum("status").notNull().default("active"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("school_memberships_school_user_unique").on(
-      table.schoolId,
-      table.clerkUserId,
-    ),
-    index("school_memberships_user_idx").on(table.clerkUserId, table.status),
-  ],
-);
-
-export const classesTable = pgTable(
-  "school_classes",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    schoolId: uuid("school_id")
-      .notNull()
-      .references(() => schoolsTable.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    grade: text("grade").notNull(),
-    stream: text("stream"),
-    academicYear: text("academic_year").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("school_classes_identity_unique").on(
-      table.schoolId,
-      table.name,
-      table.academicYear,
-    ),
-    index("school_classes_school_idx").on(table.schoolId),
-  ],
-);
-
-export const studentsTable = pgTable(
-  "students",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    schoolId: uuid("school_id")
-      .notNull()
-      .references(() => schoolsTable.id, { onDelete: "cascade" }),
-    classId: uuid("class_id").references(() => classesTable.id, {
-      onDelete: "set null",
-    }),
-    firstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull(),
-    admissionNumber: text("admission_number").notNull(),
-    guardianName: text("guardian_name"),
-    guardianEmail: text("guardian_email"),
-    guardianPhone: text("guardian_phone"),
-    status: studentStatusEnum("status").notNull().default("active"),
+    createdByUserId: text("created_by_user_id"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  (table) => [
-    uniqueIndex("students_school_admission_unique").on(
-      table.schoolId,
-      table.admissionNumber,
-    ),
-    index("students_school_class_idx").on(
-      table.schoolId,
-      table.classId,
-      table.status,
-    ),
-    index("students_name_search_idx").on(
-      table.schoolId,
-      table.lastName,
-      table.firstName,
-    ),
-  ],
-);
-
-export const attendanceRecordsTable = pgTable(
-  "attendance_records",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    schoolId: uuid("school_id")
-      .notNull()
-      .references(() => schoolsTable.id, { onDelete: "cascade" }),
-    classId: uuid("class_id")
-      .notNull()
-      .references(() => classesTable.id, { onDelete: "cascade" }),
-    studentId: uuid("student_id")
-      .notNull()
-      .references(() => studentsTable.id, { onDelete: "cascade" }),
-    attendanceDate: date("attendance_date", { mode: "string" }).notNull(),
-    status: attendanceStatusEnum("status").notNull(),
-    note: text("note"),
-    recordedBy: text("recorded_by").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
       .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
   },
   (table) => [
-    uniqueIndex("attendance_student_date_unique").on(
-      table.studentId,
-      table.attendanceDate,
-    ),
-    index("attendance_school_date_class_idx").on(
+    uniqueIndex("school_memberships_school_user_role_unique").on(
       table.schoolId,
-      table.attendanceDate,
-      table.classId,
+      table.authUserId,
+      table.role,
     ),
+    index("school_memberships_user_idx").on(table.authUserId, table.status),
+    index("school_memberships_school_role_idx")
+      .on(table.schoolId, table.role)
+      .where(sql`${table.status} = 'active'`),
   ],
 );
 
@@ -197,11 +120,14 @@ export const auditLogsTable = pgTable(
     schoolId: uuid("school_id")
       .notNull()
       .references(() => schoolsTable.id, { onDelete: "cascade" }),
-    actorClerkUserId: text("actor_clerk_user_id").notNull(),
+    actorUserId: text("actor_user_id").notNull(),
     action: text("action").notNull(),
     entityType: text("entity_type").notNull(),
     entityId: uuid("entity_id"),
-    metadata: jsonb("metadata").$type<Record<string, unknown>>().notNull().default({}),
+    metadata: jsonb("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -211,38 +137,8 @@ export const auditLogsTable = pgTable(
   ],
 );
 
-export const insertSchoolSchema = createInsertSchema(schoolsTable).omit({
-  id: true,
-  slug: true,
-  createdAt: true,
-});
-export const insertSchoolMembershipSchema = createInsertSchema(
-  schoolMembershipsTable,
-).omit({ id: true, createdAt: true });
-export const insertClassSchema = createInsertSchema(classesTable).omit({
-  id: true,
-  createdAt: true,
-});
-export const insertStudentSchema = createInsertSchema(studentsTable).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-export const insertAttendanceRecordSchema = createInsertSchema(
-  attendanceRecordsTable,
-).omit({ id: true, createdAt: true, updatedAt: true });
-export const insertAuditLogSchema = createInsertSchema(auditLogsTable).omit({
-  id: true,
-  createdAt: true,
-});
-
 export type School = typeof schoolsTable.$inferSelect;
 export type SchoolMembership = typeof schoolMembershipsTable.$inferSelect;
-export type SchoolClass = typeof classesTable.$inferSelect;
-export type Student = typeof studentsTable.$inferSelect;
-export type AttendanceRecord = typeof attendanceRecordsTable.$inferSelect;
 export type AuditLog = typeof auditLogsTable.$inferSelect;
 export type SchoolRole = (typeof schoolRoleEnum.enumValues)[number];
-export type InsertSchool = z.infer<typeof insertSchoolSchema>;
-export type InsertClass = z.infer<typeof insertClassSchema>;
-export type InsertStudent = z.infer<typeof insertStudentSchema>;
+export type SchoolCategory = (typeof schoolCategoryEnum.enumValues)[number];
