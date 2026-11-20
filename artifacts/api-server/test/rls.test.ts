@@ -61,6 +61,22 @@ describe("database role", () => {
   });
 });
 
+describe("grading scale defaults", () => {
+  it("allows several non-default scales and one default per school", async () => {
+    const insert = (user: string, schoolId: string, name: string, isDefault: boolean) => rows(user,
+      "INSERT INTO grading_scales (school_id, name, grade_bands, is_default) VALUES ($1, $2, '[]'::jsonb, $3) RETURNING id",
+      [schoolId, name, isDefault]);
+    await insert(USERS.ownerA, fx.schoolA, "Primary", true);
+    await insert(USERS.ownerA, fx.schoolA, "Alternative 1", false);
+    await insert(USERS.ownerA, fx.schoolA, "Alternative 2", false);
+    await insert(USERS.ownerB, fx.schoolB, "Primary", true);
+    await denied(insert(USERS.ownerA, fx.schoolA, "Duplicate default", true), "23505");
+    await denied(rows(USERS.ownerA,
+      "UPDATE grading_scales SET is_default = true WHERE school_id = $1 AND name = 'Alternative 1'",
+      [fx.schoolA]), "23505");
+  });
+});
+
 describe("tenant isolation", () => {
   it("an owner sees only their own school", async () => {
     const schools = await rows(USERS.ownerB, "SELECT id FROM schools");

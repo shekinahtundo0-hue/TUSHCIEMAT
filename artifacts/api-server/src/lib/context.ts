@@ -45,6 +45,8 @@ export async function schoolCapabilities(tx: Tx, schoolId: string): Promise<Scho
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const outboxes = new WeakMap<Response, Outbox>();
+
 export function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID.test(value);
 }
@@ -67,7 +69,7 @@ export async function inSchool<T>(
   if (!schoolId) throw badRequest("Choose a school first (X-School-Id header).", "school_required");
   if (!isUuid(schoolId)) throw badRequest("X-School-Id must be a school id.", "school_required");
 
-  return database.asUser(userId, async (tx) => {
+  return withCommittedResponse(res, () => database.asUser(userId, async (tx) => {
     const rows = await tx
       .select({ role: schoolMembershipsTable.role })
       .from(schoolMembershipsTable)
@@ -90,7 +92,7 @@ export async function inSchool<T>(
       }
     }
     return fn(tx, { userId, schoolId, roles, capabilities });
-  });
+  }));
 }
 
 export async function audit(
@@ -111,6 +113,32 @@ export async function audit(
   });
 }
 
+type Outbox = { status?: number; body?: unknown; empty?: boolean };
+
+/**
+ * Responses written inside a transaction are held until it commits. A learner must never
+ * see "submitted" for a row the database rejected, and a rolled back write cannot be
+ * un-told once the client has been told it succeeded. Handlers that answer after this
+ * call returns are already past the commit, so an untouched outbox is left alone.
+ */
+async function withCommittedResponse<T>(res: Response, run: () => Promise<T>): Promise<T> {
+  if (outboxes.has(res)) return run();
+  const outbox: Outbox = {};
+  outboxes.set(res, outbox);
+  let result: T;
+  try {
+    result = await run();
+  } catch (error) {
+    outboxes.delete(res);
+    throw error;
+  }
+  outboxes.delete(res);
+  if (outbox.status === undefined) return result;
+  if (outbox.empty) res.status(outbox.status).end();
+  else res.status(outbox.status).json(outbox.body);
+  return result;
+}
+
 /** Validates the response against the OpenAPI schema, dropping unlisted fields. */
 export function send<T>(
   res: Response,
@@ -118,5 +146,25 @@ export function send<T>(
   data: unknown,
   status = 200,
 ): void {
-  res.status(status).json(schema.parse(data));
+  const body = schema.parse(data);
+  const outbox = outboxes.get(res);
+  if (outbox) {
+    outbox.status = status;
+    outbox.body = body;
+    outbox.empty = undefined;
+    return;
+  }
+  res.status(status).json(body);
+}
+
+/** For endpoints that succeed without a body. */
+export function sendNoContent(res: Response, status = 204): void {
+  const outbox = outboxes.get(res);
+  if (outbox) {
+    outbox.status = status;
+    outbox.empty = true;
+    outbox.body = undefined;
+    return;
+  }
+  res.status(status).end();
 }

@@ -1,0 +1,306 @@
+.timetable-page {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+}
+
+.page-header p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 14px;
+}
+
+.view-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.toggle-btn {
+  padding: 10px 20px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #6b7280;
+}
+
+.toggle-btn:hover {
+  border-color: #1a5f42;
+  color: #1f2937;
+}
+
+.toggle-btn.active {
+  background: #1a5f42;
+  border-color: #1a5f42;
+  color: white;
+}
+
+.timetable-content {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+/* Today View */
+.today-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-day {
+  text-align: center;
+  padding: 60px 20px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+.lesson-block {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 4px solid #d1d5db;
+  transition: all 0.2s;
+}
+
+.lesson-block:hover {
+  background: #f3f4f6;
+  border-left-color: #1a5f42;
+}
+
+.lesson-block.current {
+  background: #f0fdf4;
+  border-left-color: #10b981;
+}
+
+.lesson-block.next {
+  background: #eff6ff;
+  border-left-color: #3b82f6;
+}
+
+.lesson-block .badge {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #1f2937;
+  color: white;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  min-width: 60px;
+  text-align: center;
+}
+
+.lesson-block.current .badge {
+  background: #10b981;
+}
+
+.lesson-block.next .badge {
+  background: #3b82f6;
+}
+
+.lesson-block .content {
+  display: grid;
+  gap: 4px;
+}
+
+.lesson-block h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.lesson-block p {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.lesson-block .time {
+  font-weight: 600;
+  color: #374151;
+}
+
+.lesson-block .teacher,
+.lesson-block .room {
+  font-size: 13px;
+}
+
+/* Week View */
+.week-view {
+  overflow-x: auto;
+}
+
+.timetable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.timetable thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.timetable th {
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.timetable th:first-child {
+  text-align: left;
+  padding: 12px 16px;
+}
+
+.timetable tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.timetable tbody tr:hover {
+  background: #f9fafb;
+}
+
+.timetable td {
+  padding: 12px 8px;
+  text-align: center;
+  height: 100px;
+  vertical-align: top;
+}
+
+.timetable td:first-child {
+  text-align: left;
+  padding: 12px 16px;
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 13px;
+  color: #6b7280;
+  min-width: 80px;
+}
+
+.period-label {
+  min-width: 80px;
+}
+
+.lesson-cell {
+  border: 1px solid #e5e7eb;
+  padding: 4px !important;
+}
+
+.lesson-compact {
+  background: #f0fdf4;
+  border: 1px solid #d1fae5;
+  border-radius: 4px;
+  padding: 6px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-size: 12px;
+  color: #065f46;
+}
+
+.lesson-compact .subject {
+  font-weight: 600;
+  color: #047857;
+  margin-bottom: 2px;
+}
+
+.lesson-compact .time {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 2px;
+}
+
+.lesson-compact .teacher {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.free {
+  color: #d1d5db;
+  font-weight: 500;
+}
+
+@media (max-width: 1024px) {
+  .timetable {
+    font-size: 12px;
+  }
+
+  .timetable th {
+    padding: 10px 4px;
+  }
+
+  .timetable td {
+    padding: 10px 4px;
+    height: 80px;
+  }
+
+  .lesson-compact {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .timetable-page {
+    padding: 16px;
+  }
+
+  .timetable-content {
+    padding: 16px;
+  }
+
+  .lesson-block {
+    grid-template-columns: 1fr;
+  }
+
+  .lesson-block .badge {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .lesson-block {
+    padding: 12px;
+  }
+
+  .lesson-block h4 {
+    font-size: 15px;
+  }
+
+  .view-controls {
+    width: 100%;
+  }
+
+  .toggle-btn {
+    flex: 1;
+  }
+
+  .timetable {
+    min-width: 600px;
+    font-size: 11px;
+  }
+}

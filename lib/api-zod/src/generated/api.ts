@@ -40,7 +40,7 @@ export const GetMeResponse = zod.object({
   "schoolId": zod.string().uuid(),
   "schoolName": zod.string(),
   "roles": zod.array(zod.enum(['owner', 'school_admin', 'principal', 'academic_admin', 'bursar', 'teacher', 'parent', 'student', 'tutor'])),
-  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'records.delete']))
+  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'staff.manage', 'workload.manage', 'communications.manage', 'classroom.manage', 'records.delete']))
 }))
 })
 
@@ -1080,7 +1080,7 @@ export const ListMembersResponseItem = zod.object({
   "role": zod.enum(['owner', 'school_admin', 'principal', 'academic_admin', 'bursar', 'teacher', 'parent', 'student', 'tutor']),
   "status": zod.enum(['active', 'suspended']),
   "createdAt": zod.coerce.date(),
-  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'records.delete']))
+  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'staff.manage', 'workload.manage', 'communications.manage', 'classroom.manage', 'records.delete']))
 })
 export const ListMembersResponse = zod.array(ListMembersResponseItem)
 
@@ -1108,7 +1108,7 @@ export const UpdateMemberResponse = zod.object({
   "role": zod.enum(['owner', 'school_admin', 'principal', 'academic_admin', 'bursar', 'teacher', 'parent', 'student', 'tutor']),
   "status": zod.enum(['active', 'suspended']),
   "createdAt": zod.coerce.date(),
-  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'records.delete']))
+  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'staff.manage', 'workload.manage', 'communications.manage', 'classroom.manage', 'records.delete']))
 })
 
 
@@ -1123,12 +1123,12 @@ export const SetMemberCapabilitiesHeader = zod.object({
   "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
 })
 
-export const setMemberCapabilitiesBodyCapabilitiesMax = 11;
+export const setMemberCapabilitiesBodyCapabilitiesMax = 15;
 
 
 
 export const SetMemberCapabilitiesBody = zod.object({
-  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'records.delete'])).max(setMemberCapabilitiesBodyCapabilitiesMax)
+  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'staff.manage', 'workload.manage', 'communications.manage', 'classroom.manage', 'records.delete'])).max(setMemberCapabilitiesBodyCapabilitiesMax)
 })
 
 export const SetMemberCapabilitiesResponse = zod.object({
@@ -1139,7 +1139,7 @@ export const SetMemberCapabilitiesResponse = zod.object({
   "role": zod.enum(['owner', 'school_admin', 'principal', 'academic_admin', 'bursar', 'teacher', 'parent', 'student', 'tutor']),
   "status": zod.enum(['active', 'suspended']),
   "createdAt": zod.coerce.date(),
-  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'records.delete']))
+  "capabilities": zod.array(zod.enum(['students.manage', 'academics.manage', 'attendance.manage', 'people.manage', 'requests.review', 'settings.manage', 'announcements.manage', 'assessments.manage', 'results.publish', 'resources.manage', 'staff.manage', 'workload.manage', 'communications.manage', 'classroom.manage', 'records.delete']))
 })
 
 
@@ -1307,5 +1307,1908 @@ export const ListPlatformSchoolsResponseItem = zod.object({
   "activeStudents": zod.number().int()
 })
 export const ListPlatformSchoolsResponse = zod.array(ListPlatformSchoolsResponseItem)
+
+
+/**
+ * @summary Assessments for the signed-in learner's class
+ */
+export const listMyAssessmentsQuerySubjectMax = 100;
+
+export const listMyAssessmentsQueryLimitDefault = 20;
+export const listMyAssessmentsQueryLimitMax = 100;
+
+export const listMyAssessmentsQueryOffsetDefault = 0;
+export const listMyAssessmentsQueryOffsetMin = 0;
+
+
+
+export const ListMyAssessmentsQueryParams = zod.object({
+  "termId": zod.coerce.string().uuid().optional(),
+  "subject": zod.coerce.string().max(listMyAssessmentsQuerySubjectMax).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listMyAssessmentsQueryLimitMax).default(listMyAssessmentsQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listMyAssessmentsQueryOffsetMin).default(listMyAssessmentsQueryOffsetDefault)
+})
+
+export const ListMyAssessmentsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListMyAssessmentsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "subject": zod.string(),
+  "maxMarks": zod.number(),
+  "termName": zod.string()
+})),
+  "total": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+/**
+ * @summary Published assessment marks for the signed-in learner
+ */
+export const listPublishedResultsQueryLimitDefault = 20;
+export const listPublishedResultsQueryLimitMax = 100;
+
+export const listPublishedResultsQueryOffsetDefault = 0;
+export const listPublishedResultsQueryOffsetMin = 0;
+
+export const listPublishedResultsQuerySortByDefault = `recent`;
+
+export const ListPublishedResultsQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listPublishedResultsQueryLimitMax).default(listPublishedResultsQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listPublishedResultsQueryOffsetMin).default(listPublishedResultsQueryOffsetDefault),
+  "sortBy": zod.enum(['recent', 'subject']).default(listPublishedResultsQuerySortByDefault)
+})
+
+export const ListPublishedResultsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListPublishedResultsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "assessmentId": zod.string().uuid(),
+  "subject": zod.string(),
+  "maxMarks": zod.number(),
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable()
+})),
+  "total": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+/**
+ * @summary Published mark history for one subject
+ */
+export const getSubjectResultsPathSubjectMax = 100;
+
+
+
+export const GetSubjectResultsParams = zod.object({
+  "subject": zod.coerce.string().min(1).max(getSubjectResultsPathSubjectMax)
+})
+
+export const GetSubjectResultsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const GetSubjectResultsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "assessmentId": zod.string().uuid(),
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable()
+})),
+  "subject": zod.string(),
+  "averageTrend": zod.number().nullable()
+})
+
+
+/**
+ * @summary Published term summary for the signed-in learner
+ */
+export const GetTermResultsParams = zod.object({
+  "termId": zod.coerce.string().uuid()
+})
+
+export const GetTermResultsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getTermResultsResponseTermDataStartsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getTermResultsResponseTermDataEndsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetTermResultsResponse = zod.object({
+  "termId": zod.string().uuid(),
+  "termName": zod.string(),
+  "termData": zod.object({
+  "startsOn": zod.string().regex(getTermResultsResponseTermDataStartsOnRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "endsOn": zod.string().regex(getTermResultsResponseTermDataEndsOnRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.')
+}),
+  "subjectResults": zod.array(zod.object({
+  "subject": zod.string(),
+  "totalMarks": zod.number().nullable(),
+  "averagePercentage": zod.number().nullable(),
+  "grade": zod.string().nullable(),
+  "position": zod.number().int().nullable()
+})),
+  "overallAverage": zod.number().nullable(),
+  "classPosition": zod.number().int().nullable()
+})
+
+
+/**
+ * @summary Assessment details with the learner's mark when published
+ */
+export const GetAssessmentResultParams = zod.object({
+  "assessmentId": zod.coerce.string().uuid()
+})
+
+export const GetAssessmentResultHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getAssessmentResultResponseTermStartsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getAssessmentResultResponseTermEndsOnRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetAssessmentResultResponse = zod.object({
+  "id": zod.string().uuid(),
+  "subject": zod.string(),
+  "maxMarks": zod.number(),
+  "assessmentTypeId": zod.string().uuid(),
+  "term": zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "startsOn": zod.string().regex(getAssessmentResultResponseTermStartsOnRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "endsOn": zod.string().regex(getAssessmentResultResponseTermEndsOnRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.')
+}),
+  "class": zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string()
+}),
+  "studentMark": zod.union([zod.object({
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "submissionStatus": zod.string(),
+  "markedAt": zod.coerce.date().nullable()
+}),zod.null()]),
+  "isPublished": zod.boolean()
+})
+
+
+/**
+ * @summary Set the publication status of term results (staff)
+ */
+export const PublishResultsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const PublishResultsBody = zod.object({
+  "termId": zod.string().uuid(),
+  "classId": zod.string().uuid().optional(),
+  "status": zod.enum(['draft', 'pending_review', 'approved', 'published'])
+})
+
+export const PublishResultsResponse = zod.object({
+  "success": zod.boolean(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary Published results for a verified linked child (parents)
+ */
+export const ListChildResultsParams = zod.object({
+  "studentId": zod.coerce.string().uuid()
+})
+
+export const ListChildResultsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListChildResultsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "subject": zod.string(),
+  "marksObtained": zod.number().nullable(),
+  "maxMarks": zod.number(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable()
+})),
+  "studentId": zod.string().uuid()
+})
+
+
+/**
+ * @summary Assignments for the signed-in learner's class
+ */
+export const listAssignmentsQuerySubjectMax = 100;
+
+export const listAssignmentsQueryLimitDefault = 20;
+export const listAssignmentsQueryLimitMax = 100;
+
+export const listAssignmentsQueryOffsetDefault = 0;
+export const listAssignmentsQueryOffsetMin = 0;
+
+
+
+export const ListAssignmentsQueryParams = zod.object({
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue']).optional(),
+  "subject": zod.coerce.string().max(listAssignmentsQuerySubjectMax).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listAssignmentsQueryLimitMax).default(listAssignmentsQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listAssignmentsQueryOffsetMin).default(listAssignmentsQueryOffsetDefault)
+})
+
+export const ListAssignmentsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const listAssignmentsResponseDataItemDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ListAssignmentsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "deadlineDate": zod.string().regex(listAssignmentsResponseDataItemDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "marksAllocated": zod.number(),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "allowLate": zod.boolean(),
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue']),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+/**
+ * @summary Create an assignment (staff and teachers)
+ */
+export const CreateAssignmentHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const createAssignmentBodySubjectMax = 100;
+
+export const createAssignmentBodyTitleMin = 2;
+export const createAssignmentBodyTitleMax = 200;
+
+export const createAssignmentBodyDescriptionMax = 5000;
+
+export const createAssignmentBodyInstructionsItemTypeMax = 40;
+
+export const createAssignmentBodyInstructionsItemContentMax = 2000;
+
+export const createAssignmentBodyInstructionsMax = 50;
+
+export const createAssignmentBodyAttachedResourceIdsMax = 20;
+
+export const createAssignmentBodyMarksAllocatedExclusiveMin = 0;
+
+export const createAssignmentBodyDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const createAssignmentBodyDeadlineTimeRegExp = new RegExp('^\\d{2}:\\d{2}(:\\d{2})?$');
+export const createAssignmentBodyTopicMax = 200;
+
+export const createAssignmentBodyAllowedFileTypesItemMax = 10;
+
+export const createAssignmentBodyAllowedFileTypesMax = 10;
+
+export const createAssignmentBodyFilesItemPathMax = 1000;
+
+export const createAssignmentBodyFilesItemNameMax = 250;
+
+
+export const createAssignmentBodyFilesItemTypeMax = 120;
+
+export const createAssignmentBodyFilesMax = 10;
+
+
+
+export const CreateAssignmentBody = zod.object({
+  "classId": zod.string().uuid(),
+  "subject": zod.string().min(1).max(createAssignmentBodySubjectMax),
+  "title": zod.string().min(createAssignmentBodyTitleMin).max(createAssignmentBodyTitleMax),
+  "description": zod.string().max(createAssignmentBodyDescriptionMax).optional(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(createAssignmentBodyInstructionsItemTypeMax),
+  "content": zod.string().max(createAssignmentBodyInstructionsItemContentMax)
+})).max(createAssignmentBodyInstructionsMax).optional(),
+  "attachedResourceIds": zod.array(zod.string().uuid()).max(createAssignmentBodyAttachedResourceIdsMax).optional(),
+  "marksAllocated": zod.number().gt(createAssignmentBodyMarksAllocatedExclusiveMin),
+  "deadlineDate": zod.string().regex(createAssignmentBodyDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().regex(createAssignmentBodyDeadlineTimeRegExp).optional(),
+  "allowResubmission": zod.boolean().optional(),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']).optional(),
+  "topic": zod.string().max(createAssignmentBodyTopicMax).optional(),
+  "allowLate": zod.boolean().optional(),
+  "allowedFileTypes": zod.array(zod.string().max(createAssignmentBodyAllowedFileTypesItemMax)).max(createAssignmentBodyAllowedFileTypesMax).optional(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(createAssignmentBodyFilesItemPathMax),
+  "name": zod.string().max(createAssignmentBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(createAssignmentBodyFilesItemTypeMax)
+})).max(createAssignmentBodyFilesMax).optional(),
+  "publish": zod.enum(['draft', 'published', 'scheduled']).optional(),
+  "publishAt": zod.coerce.date().optional()
+})
+
+export const createAssignmentResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const CreateAssignmentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "marksAllocated": zod.number(),
+  "deadlineDate": zod.string().regex(createAssignmentResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "createdAt": zod.coerce.date(),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']).optional(),
+  "publishedAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Assignment with the learner's own submission
+ */
+export const GetAssignmentDetailParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const GetAssignmentDetailHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getAssignmentDetailResponseInstructionsItemTypeMax = 40;
+
+export const getAssignmentDetailResponseInstructionsItemContentMax = 2000;
+
+export const getAssignmentDetailResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetAssignmentDetailResponse = zod.object({
+  "id": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(getAssignmentDetailResponseInstructionsItemTypeMax),
+  "content": zod.string().max(getAssignmentDetailResponseInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullable(),
+  "marksAllocated": zod.number(),
+  "deadlineDate": zod.string().regex(getAssignmentDetailResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "createdAt": zod.coerce.date(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submission": zod.union([zod.object({
+  "id": zod.string().uuid(),
+  "submissionText": zod.string().nullable(),
+  "submittedFiles": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submittedAt": zod.coerce.date().nullable(),
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue']),
+  "isLate": zod.boolean()
+}),zod.null()]),
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue'])
+})
+
+
+/**
+ * @summary Update an assignment before any submissions (staff and teachers)
+ */
+export const UpdateAssignmentParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const UpdateAssignmentHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const updateAssignmentBodySubjectMax = 100;
+
+export const updateAssignmentBodyTitleMin = 2;
+export const updateAssignmentBodyTitleMax = 200;
+
+export const updateAssignmentBodyDescriptionMax = 5000;
+
+export const updateAssignmentBodyMarksAllocatedExclusiveMin = 0;
+
+export const updateAssignmentBodyDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const updateAssignmentBodyDeadlineTimeRegExp = new RegExp('^\\d{2}:\\d{2}(:\\d{2})?$');
+export const updateAssignmentBodyInstructionsItemTypeMax = 40;
+
+export const updateAssignmentBodyInstructionsItemContentMax = 2000;
+
+export const updateAssignmentBodyInstructionsMax = 50;
+
+export const updateAssignmentBodyAttachedResourceIdsMax = 20;
+
+export const updateAssignmentBodyTopicMax = 200;
+
+export const updateAssignmentBodyAllowedFileTypesItemMax = 10;
+
+export const updateAssignmentBodyAllowedFileTypesMax = 10;
+
+export const updateAssignmentBodyFilesItemPathMax = 1000;
+
+export const updateAssignmentBodyFilesItemNameMax = 250;
+
+
+export const updateAssignmentBodyFilesItemTypeMax = 120;
+
+export const updateAssignmentBodyFilesMax = 10;
+
+
+
+export const UpdateAssignmentBody = zod.object({
+  "subject": zod.string().min(1).max(updateAssignmentBodySubjectMax).optional(),
+  "title": zod.string().min(updateAssignmentBodyTitleMin).max(updateAssignmentBodyTitleMax).optional(),
+  "description": zod.string().max(updateAssignmentBodyDescriptionMax).optional(),
+  "marksAllocated": zod.number().gt(updateAssignmentBodyMarksAllocatedExclusiveMin).optional(),
+  "deadlineDate": zod.string().regex(updateAssignmentBodyDeadlineDateRegExp).optional().describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().regex(updateAssignmentBodyDeadlineTimeRegExp).nullish(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(updateAssignmentBodyInstructionsItemTypeMax),
+  "content": zod.string().max(updateAssignmentBodyInstructionsItemContentMax)
+})).max(updateAssignmentBodyInstructionsMax).optional(),
+  "attachedResourceIds": zod.array(zod.string().uuid()).max(updateAssignmentBodyAttachedResourceIdsMax).optional(),
+  "allowResubmission": zod.boolean().optional(),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']).optional(),
+  "topic": zod.string().max(updateAssignmentBodyTopicMax).nullish(),
+  "allowLate": zod.boolean().optional(),
+  "allowedFileTypes": zod.array(zod.string().max(updateAssignmentBodyAllowedFileTypesItemMax)).max(updateAssignmentBodyAllowedFileTypesMax).optional(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(updateAssignmentBodyFilesItemPathMax),
+  "name": zod.string().max(updateAssignmentBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(updateAssignmentBodyFilesItemTypeMax)
+})).max(updateAssignmentBodyFilesMax).optional()
+})
+
+export const UpdateAssignmentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Submit (or resubmit when allowed) before the deadline
+ */
+export const SubmitAssignmentParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const SubmitAssignmentHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const submitAssignmentBodySubmissionTextMax = 20000;
+
+export const submitAssignmentBodyFilesItemPathMax = 1000;
+
+export const submitAssignmentBodyFilesItemNameMax = 250;
+
+
+export const submitAssignmentBodyFilesItemTypeMax = 120;
+
+export const submitAssignmentBodyFilesMax = 10;
+
+
+
+export const SubmitAssignmentBody = zod.object({
+  "submissionText": zod.string().max(submitAssignmentBodySubmissionTextMax).optional(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(submitAssignmentBodyFilesItemPathMax),
+  "name": zod.string().max(submitAssignmentBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(submitAssignmentBodyFilesItemTypeMax)
+})).max(submitAssignmentBodyFilesMax).optional()
+})
+
+export const SubmitAssignmentResponse = zod.object({
+  "success": zod.boolean(),
+  "id": zod.string().uuid(),
+  "submittedAt": zod.coerce.date(),
+  "status": zod.string(),
+  "isLate": zod.boolean()
+})
+
+
+/**
+ * @summary Save submission edits before the deadline
+ */
+export const UpdateAssignmentSubmissionParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const UpdateAssignmentSubmissionHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const updateAssignmentSubmissionBodySubmissionTextMax = 20000;
+
+export const updateAssignmentSubmissionBodyFilesItemPathMax = 1000;
+
+export const updateAssignmentSubmissionBodyFilesItemNameMax = 250;
+
+
+export const updateAssignmentSubmissionBodyFilesItemTypeMax = 120;
+
+export const updateAssignmentSubmissionBodyFilesMax = 10;
+
+
+
+export const UpdateAssignmentSubmissionBody = zod.object({
+  "submissionText": zod.string().max(updateAssignmentSubmissionBodySubmissionTextMax).optional(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(updateAssignmentSubmissionBodyFilesItemPathMax),
+  "name": zod.string().max(updateAssignmentSubmissionBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(updateAssignmentSubmissionBodyFilesItemTypeMax)
+})).max(updateAssignmentSubmissionBodyFilesMax).optional()
+})
+
+export const UpdateAssignmentSubmissionResponse = zod.object({
+  "success": zod.boolean(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary The learner's own submission with marks and feedback
+ */
+export const GetAssignmentSubmissionParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const GetAssignmentSubmissionHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const GetAssignmentSubmissionResponse = zod.object({
+  "id": zod.string().uuid(),
+  "submissionText": zod.string().nullable(),
+  "submittedFiles": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submittedAt": zod.coerce.date().nullable(),
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue']),
+  "isLate": zod.boolean()
+})
+
+
+/**
+ * @summary Full class roster with submissions, for marking (staff and teachers)
+ */
+export const ListAssignmentSubmissionsParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const listAssignmentSubmissionsQuerySearchMax = 100;
+
+export const listAssignmentSubmissionsQueryLimitDefault = 50;
+export const listAssignmentSubmissionsQueryLimitMax = 100;
+
+export const listAssignmentSubmissionsQueryOffsetDefault = 0;
+export const listAssignmentSubmissionsQueryOffsetMin = 0;
+
+
+
+export const ListAssignmentSubmissionsQueryParams = zod.object({
+  "filter": zod.enum(['all', 'submitted', 'graded', 'pending', 'late']).optional(),
+  "search": zod.coerce.string().max(listAssignmentSubmissionsQuerySearchMax).optional(),
+  "sort": zod.enum(['name', 'submitted', 'marks']).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listAssignmentSubmissionsQueryLimitMax).default(listAssignmentSubmissionsQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listAssignmentSubmissionsQueryOffsetMin).default(listAssignmentSubmissionsQueryOffsetDefault)
+})
+
+export const ListAssignmentSubmissionsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListAssignmentSubmissionsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid().nullable(),
+  "studentId": zod.string().uuid(),
+  "studentName": zod.string().nullable(),
+  "admissionNumber": zod.string().nullable(),
+  "submittedAt": zod.coerce.date().nullable(),
+  "submittedText": zod.string().nullable(),
+  "submittedFiles": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "marksObtained": zod.number().nullable(),
+  "feedback": zod.string().nullable(),
+  "markedAt": zod.coerce.date().nullable(),
+  "status": zod.enum(['not_started', 'in_progress', 'submitted', 'graded', 'overdue']),
+  "isLate": zod.boolean()
+})),
+  "total": zod.number().int(),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "notSubmittedCount": zod.number().int()
+})
+
+
+/**
+ * @summary Grade a submission (staff and teachers)
+ */
+export const MarkAssignmentSubmissionParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid(),
+  "submissionId": zod.coerce.string().uuid()
+})
+
+export const MarkAssignmentSubmissionHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const markAssignmentSubmissionBodyMarksObtainedMin = 0;
+
+export const markAssignmentSubmissionBodyFeedbackMax = 5000;
+
+
+
+export const MarkAssignmentSubmissionBody = zod.object({
+  "marksObtained": zod.number().min(markAssignmentSubmissionBodyMarksObtainedMin),
+  "feedback": zod.string().max(markAssignmentSubmissionBodyFeedbackMax).optional()
+})
+
+export const MarkAssignmentSubmissionResponse = zod.object({
+  "success": zod.boolean(),
+  "marksObtained": zod.number(),
+  "markedAt": zod.coerce.date(),
+  "status": zod.string()
+})
+
+
+/**
+ * @summary Visible learning resources for a class
+ */
+export const listLearningResourcesQuerySubjectMax = 100;
+
+export const listLearningResourcesQuerySortDefault = `newest`;
+export const listLearningResourcesQueryLimitDefault = 20;
+export const listLearningResourcesQueryLimitMax = 100;
+
+export const listLearningResourcesQueryOffsetDefault = 0;
+export const listLearningResourcesQueryOffsetMin = 0;
+
+
+
+export const ListLearningResourcesQueryParams = zod.object({
+  "classId": zod.coerce.string().uuid().optional(),
+  "subject": zod.coerce.string().max(listLearningResourcesQuerySubjectMax).optional(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']).optional(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']).optional(),
+  "sort": zod.enum(['newest', 'oldest', 'title']).default(listLearningResourcesQuerySortDefault),
+  "limit": zod.coerce.number().int().min(1).max(listLearningResourcesQueryLimitMax).default(listLearningResourcesQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listLearningResourcesQueryOffsetMin).default(listLearningResourcesQueryOffsetDefault)
+})
+
+export const ListLearningResourcesHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListLearningResourcesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "subject": zod.string().nullable(),
+  "academicYear": zod.string().nullable(),
+  "term": zod.string().nullable(),
+  "fileName": zod.string().nullable(),
+  "fileSizeBytes": zod.number().int().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "publishedAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "createdAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "hasMore": zod.boolean()
+})
+
+
+/**
+ * @summary Create a learning resource (staff and teachers)
+ */
+export const CreateLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const createLearningResourceBodyTitleMin = 2;
+export const createLearningResourceBodyTitleMax = 200;
+
+export const createLearningResourceBodyDescriptionMax = 2000;
+
+export const createLearningResourceBodySubjectMax = 100;
+
+export const createLearningResourceBodyLearningObjectivesItemMax = 500;
+
+export const createLearningResourceBodyLearningObjectivesMax = 20;
+
+export const createLearningResourceBodyRestrictedToStudentIdsMax = 200;
+
+export const createLearningResourceBodyFilesItemPathMax = 1000;
+
+export const createLearningResourceBodyFilesItemNameMax = 250;
+
+
+export const createLearningResourceBodyFilesItemTypeMax = 120;
+
+export const createLearningResourceBodyFilesMax = 10;
+
+
+
+export const CreateLearningResourceBody = zod.object({
+  "classId": zod.string().uuid(),
+  "title": zod.string().min(createLearningResourceBodyTitleMin).max(createLearningResourceBodyTitleMax),
+  "description": zod.string().max(createLearningResourceBodyDescriptionMax).optional(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']).optional(),
+  "subject": zod.string().max(createLearningResourceBodySubjectMax).optional(),
+  "learningObjectives": zod.array(zod.string().max(createLearningResourceBodyLearningObjectivesItemMax)).max(createLearningResourceBodyLearningObjectivesMax).optional(),
+  "lessonId": zod.string().uuid().optional(),
+  "termId": zod.string().uuid().nullish(),
+  "publishAt": zod.coerce.date().optional(),
+  "publish": zod.enum(['draft', 'published', 'scheduled']).optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "isVisibleToStudents": zod.boolean().optional(),
+  "restrictedToStudentIds": zod.array(zod.string().uuid()).max(createLearningResourceBodyRestrictedToStudentIdsMax).optional(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(createLearningResourceBodyFilesItemPathMax),
+  "name": zod.string().max(createLearningResourceBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(createLearningResourceBodyFilesItemTypeMax)
+})).max(createLearningResourceBodyFilesMax).optional()
+})
+
+export const CreateLearningResourceResponse = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "isVisibleToStudents": zod.boolean(),
+  "publishedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Recently published resources for the learner's class
+ */
+export const listRecentResourcesQueryLimitDefault = 10;
+export const listRecentResourcesQueryLimitMax = 50;
+
+
+
+export const ListRecentResourcesQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listRecentResourcesQueryLimitMax).default(listRecentResourcesQueryLimitDefault)
+})
+
+export const ListRecentResourcesHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListRecentResourcesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "publishedAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary Resource details and file metadata
+ */
+export const GetLearningResourceParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const GetLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const GetLearningResourceResponse = zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "subject": zod.string().nullable(),
+  "academicYear": zod.string().nullable(),
+  "term": zod.string().nullable(),
+  "learningObjectives": zod.array(zod.string()),
+  "fileName": zod.string().nullable(),
+  "fileSizeBytes": zod.number().int().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "publishedAt": zod.coerce.date().nullable(),
+  "scheduledPublishAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "isVisibleToStudents": zod.boolean(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Edit a resource and replace its files (staff and assigned teachers)
+ */
+export const UpdateLearningResourceParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const UpdateLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const updateLearningResourceBodyTitleMin = 2;
+export const updateLearningResourceBodyTitleMax = 200;
+
+export const updateLearningResourceBodyDescriptionMax = 2000;
+
+export const updateLearningResourceBodySubjectMax = 100;
+
+export const updateLearningResourceBodyLearningObjectivesItemMax = 500;
+
+export const updateLearningResourceBodyLearningObjectivesMax = 20;
+
+export const updateLearningResourceBodyFilesItemPathMax = 1000;
+
+export const updateLearningResourceBodyFilesItemNameMax = 250;
+
+
+export const updateLearningResourceBodyFilesItemTypeMax = 120;
+
+export const updateLearningResourceBodyFilesMax = 10;
+
+
+
+export const UpdateLearningResourceBody = zod.object({
+  "title": zod.string().min(updateLearningResourceBodyTitleMin).max(updateLearningResourceBodyTitleMax).optional(),
+  "description": zod.string().max(updateLearningResourceBodyDescriptionMax).optional(),
+  "subject": zod.string().max(updateLearningResourceBodySubjectMax).optional(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']).optional(),
+  "learningObjectives": zod.array(zod.string().max(updateLearningResourceBodyLearningObjectivesItemMax)).max(updateLearningResourceBodyLearningObjectivesMax).optional(),
+  "lessonId": zod.string().uuid().nullish(),
+  "termId": zod.string().uuid().nullish(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string().max(updateLearningResourceBodyFilesItemPathMax),
+  "name": zod.string().max(updateLearningResourceBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(updateLearningResourceBodyFilesItemTypeMax)
+})).max(updateLearningResourceBodyFilesMax).optional()
+})
+
+export const UpdateLearningResourceResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "className": zod.string().nullable(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "subject": zod.string().nullable(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "academicYear": zod.string().nullable(),
+  "term": zod.string().nullable(),
+  "uploadedBy": zod.string().nullable(),
+  "learningObjectives": zod.array(zod.string()),
+  "lessonId": zod.string().uuid().nullable(),
+  "termId": zod.string().uuid().nullable(),
+  "state": zod.enum(['draft', 'scheduled', 'published', 'expired', 'archived']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "scheduledPublishAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "isVisibleToStudents": zod.boolean(),
+  "restrictedToStudentIds": zod.array(zod.string().uuid()),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Archive a resource so learners can no longer open it
+ */
+export const DeleteLearningResourceParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const DeleteLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const DeleteLearningResourceResponse = zod.void()
+
+
+/**
+ * @summary Download URL for a resource's main file; logs learner access
+ */
+export const DownloadLearningResourceParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const DownloadLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const DownloadLearningResourceResponse = zod.object({
+  "url": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Toggle the bookmark on a resource's lesson
+ */
+export const ToggleBookmarkParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const ToggleBookmarkHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ToggleBookmarkResponse = zod.object({
+  "bookmarked": zod.boolean()
+})
+
+
+/**
+ * @summary Resources on the learner's bookmarked lessons
+ */
+export const listBookmarkedResourcesQueryLimitDefault = 20;
+export const listBookmarkedResourcesQueryLimitMax = 100;
+
+export const listBookmarkedResourcesQueryOffsetDefault = 0;
+export const listBookmarkedResourcesQueryOffsetMin = 0;
+
+
+
+export const ListBookmarkedResourcesQueryParams = zod.object({
+  "limit": zod.coerce.number().int().min(1).max(listBookmarkedResourcesQueryLimitMax).default(listBookmarkedResourcesQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listBookmarkedResourcesQueryOffsetMin).default(listBookmarkedResourcesQueryOffsetDefault)
+})
+
+export const ListBookmarkedResourcesHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListBookmarkedResourcesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "title": zod.string(),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "description": zod.string().nullable(),
+  "bookmarkedAt": zod.coerce.date().nullable()
+}))
+})
+
+
+/**
+ * @summary Lessons for a class grouped by unit and chapter
+ */
+export const ListClassLessonsParams = zod.object({
+  "classId": zod.coerce.string().uuid()
+})
+
+export const ListClassLessonsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListClassLessonsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "unit": zod.string(),
+  "chapters": zod.array(zod.object({
+  "chapter": zod.string(),
+  "lessons": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "name": zod.string(),
+  "topic": zod.string().nullable()
+}))
+}))
+}))
+})
+
+
+/**
+ * @summary Short-lived storage upload URLs for learning material files
+ */
+export const CreateResourceUploadTargetsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const createResourceUploadTargetsBodyFilesItemNameMax = 250;
+
+
+export const createResourceUploadTargetsBodyFilesItemTypeMax = 120;
+
+export const createResourceUploadTargetsBodyFilesMax = 10;
+
+
+
+export const CreateResourceUploadTargetsBody = zod.object({
+  "classId": zod.string().uuid(),
+  "files": zod.array(zod.object({
+  "name": zod.string().min(1).max(createResourceUploadTargetsBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(createResourceUploadTargetsBodyFilesItemTypeMax)
+})).min(1).max(createResourceUploadTargetsBodyFilesMax)
+})
+
+export const CreateResourceUploadTargetsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "extension": zod.string(),
+  "kind": zod.enum(['pdf', 'word', 'powerpoint', 'image', 'spreadsheet', 'text', 'archive']),
+  "method": zod.enum(['PUT']),
+  "uploadUrl": zod.string(),
+  "headers": zod.record(zod.string(), zod.string()),
+  "expiresAt": zod.coerce.date()
+})),
+  "maxFileBytes": zod.number().int(),
+  "allowedTypes": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Real subject records the caller may publish class materials or assignments to
+ */
+export const ListTeachableSubjectsQueryParams = zod.object({
+  "classId": zod.coerce.string().uuid()
+})
+
+export const ListTeachableSubjectsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListTeachableSubjectsResponse = zod.object({
+  "data": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Every resource a teacher or administrator manages, including drafts
+ */
+export const listManagedLearningResourcesQuerySubjectMax = 100;
+
+export const listManagedLearningResourcesQuerySearchMax = 100;
+
+export const listManagedLearningResourcesQuerySortDefault = `newest`;
+export const listManagedLearningResourcesQueryLimitDefault = 50;
+export const listManagedLearningResourcesQueryLimitMax = 100;
+
+export const listManagedLearningResourcesQueryOffsetDefault = 0;
+export const listManagedLearningResourcesQueryOffsetMin = 0;
+
+
+
+export const ListManagedLearningResourcesQueryParams = zod.object({
+  "classId": zod.coerce.string().uuid().optional(),
+  "state": zod.enum(['all', 'draft', 'published', 'scheduled', 'archived']).optional(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']).optional(),
+  "subject": zod.coerce.string().max(listManagedLearningResourcesQuerySubjectMax).optional(),
+  "termId": zod.coerce.string().uuid().optional(),
+  "search": zod.coerce.string().max(listManagedLearningResourcesQuerySearchMax).optional(),
+  "uploadedAfter": zod.date().optional(),
+  "uploadedBefore": zod.date().optional(),
+  "sort": zod.enum(['newest', 'oldest', 'title']).default(listManagedLearningResourcesQuerySortDefault),
+  "limit": zod.coerce.number().int().min(1).max(listManagedLearningResourcesQueryLimitMax).default(listManagedLearningResourcesQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listManagedLearningResourcesQueryOffsetMin).default(listManagedLearningResourcesQueryOffsetDefault)
+})
+
+export const ListManagedLearningResourcesHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const ListManagedLearningResourcesResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "className": zod.string().nullable(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "subject": zod.string().nullable(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "academicYear": zod.string().nullable(),
+  "term": zod.string().nullable(),
+  "uploadedBy": zod.string().nullable(),
+  "learningObjectives": zod.array(zod.string()),
+  "lessonId": zod.string().uuid().nullable(),
+  "termId": zod.string().uuid().nullable(),
+  "state": zod.enum(['draft', 'scheduled', 'published', 'expired', 'archived']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "scheduledPublishAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "isVisibleToStudents": zod.boolean(),
+  "restrictedToStudentIds": zod.array(zod.string().uuid()),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "storageEnabled": zod.boolean()
+})
+
+
+/**
+ * @summary Publish now, schedule for later, or unpublish a resource
+ */
+export const PublishLearningResourceParams = zod.object({
+  "resourceId": zod.coerce.string().uuid()
+})
+
+export const PublishLearningResourceHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const publishLearningResourceBodyRestrictedToStudentIdsMax = 200;
+
+
+
+export const PublishLearningResourceBody = zod.object({
+  "state": zod.enum(['draft', 'published', 'scheduled']),
+  "publishAt": zod.coerce.date().optional(),
+  "expiresAt": zod.coerce.date().nullish(),
+  "restrictedToStudentIds": zod.array(zod.string().uuid()).max(publishLearningResourceBodyRestrictedToStudentIdsMax).optional()
+})
+
+export const PublishLearningResourceResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "className": zod.string().nullable(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "subject": zod.string().nullable(),
+  "category": zod.enum(['class_notes', 'revision_notes', 'worksheet', 'reading_material', 'presentation', 'study_guide', 'past_paper', 'exam_resources', 'textbook', 'other']),
+  "resourceType": zod.enum(['pdf', 'docx', 'pptx', 'image', 'video', 'link', 'spreadsheet', 'text', 'archive', 'other']),
+  "academicYear": zod.string().nullable(),
+  "term": zod.string().nullable(),
+  "uploadedBy": zod.string().nullable(),
+  "learningObjectives": zod.array(zod.string()),
+  "lessonId": zod.string().uuid().nullable(),
+  "termId": zod.string().uuid().nullable(),
+  "state": zod.enum(['draft', 'scheduled', 'published', 'expired', 'archived']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "scheduledPublishAt": zod.coerce.date().nullable(),
+  "expiresAt": zod.coerce.date().nullable(),
+  "isVisibleToStudents": zod.boolean(),
+  "restrictedToStudentIds": zod.array(zod.string().uuid()),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Authorized download link for one resource file
+ */
+export const DownloadResourceFileParams = zod.object({
+  "resourceId": zod.coerce.string().uuid(),
+  "fileId": zod.coerce.string().uuid()
+})
+
+export const DownloadResourceFileHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const DownloadResourceFileResponse = zod.object({
+  "url": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Inline preview link for one resource file
+ */
+export const PreviewResourceFileParams = zod.object({
+  "resourceId": zod.coerce.string().uuid(),
+  "fileId": zod.coerce.string().uuid()
+})
+
+export const PreviewResourceFileHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const PreviewResourceFileResponse = zod.object({
+  "url": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Short-lived storage upload URLs for assignment files
+ */
+export const CreateAssignmentUploadTargetsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const createAssignmentUploadTargetsBodyFilesItemNameMax = 250;
+
+
+export const createAssignmentUploadTargetsBodyFilesItemTypeMax = 120;
+
+export const createAssignmentUploadTargetsBodyFilesMax = 10;
+
+
+
+export const CreateAssignmentUploadTargetsBody = zod.object({
+  "classId": zod.string().uuid(),
+  "files": zod.array(zod.object({
+  "name": zod.string().min(1).max(createAssignmentUploadTargetsBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(createAssignmentUploadTargetsBodyFilesItemTypeMax)
+})).min(1).max(createAssignmentUploadTargetsBodyFilesMax)
+})
+
+export const CreateAssignmentUploadTargetsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "extension": zod.string(),
+  "kind": zod.enum(['pdf', 'word', 'powerpoint', 'image', 'spreadsheet', 'text', 'archive']),
+  "method": zod.enum(['PUT']),
+  "uploadUrl": zod.string(),
+  "headers": zod.record(zod.string(), zod.string()),
+  "expiresAt": zod.coerce.date()
+})),
+  "maxFileBytes": zod.number().int(),
+  "allowedTypes": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Assignments a teacher or administrator manages, with submission counts
+ */
+export const listManagedAssignmentsQuerySubjectMax = 100;
+
+export const listManagedAssignmentsQueryLimitDefault = 50;
+export const listManagedAssignmentsQueryLimitMax = 100;
+
+export const listManagedAssignmentsQueryOffsetDefault = 0;
+export const listManagedAssignmentsQueryOffsetMin = 0;
+
+
+
+export const ListManagedAssignmentsQueryParams = zod.object({
+  "classId": zod.coerce.string().uuid(),
+  "state": zod.enum(['all', 'draft', 'published', 'scheduled', 'archived']).optional(),
+  "subject": zod.coerce.string().max(listManagedAssignmentsQuerySubjectMax).optional(),
+  "limit": zod.coerce.number().int().min(1).max(listManagedAssignmentsQueryLimitMax).default(listManagedAssignmentsQueryLimitDefault),
+  "offset": zod.coerce.number().int().min(listManagedAssignmentsQueryOffsetMin).default(listManagedAssignmentsQueryOffsetDefault)
+})
+
+export const ListManagedAssignmentsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const listManagedAssignmentsResponseDataItemInstructionsItemTypeMax = 40;
+
+export const listManagedAssignmentsResponseDataItemInstructionsItemContentMax = 2000;
+
+export const listManagedAssignmentsResponseDataItemDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ListManagedAssignmentsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(listManagedAssignmentsResponseDataItemInstructionsItemTypeMax),
+  "content": zod.string().max(listManagedAssignmentsResponseDataItemInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string().uuid()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullish(),
+  "marksAllocated": zod.number().int(),
+  "deadlineDate": zod.string().regex(listManagedAssignmentsResponseDataItemDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "archivedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})),
+  "total": zod.number().int(),
+  "storageEnabled": zod.boolean()
+})
+
+
+/**
+ * @summary Download one supporting file attached to an assignment
+ */
+export const DownloadAssignmentFileParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid(),
+  "fileId": zod.coerce.string().uuid()
+})
+
+export const DownloadAssignmentFileHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const DownloadAssignmentFileResponse = zod.object({
+  "url": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Publish now, schedule for later, or move an assignment back to draft
+ */
+export const PublishAssignmentParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const PublishAssignmentHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const PublishAssignmentBody = zod.object({
+  "state": zod.enum(['draft', 'published', 'scheduled']),
+  "publishAt": zod.coerce.date().optional()
+})
+
+export const publishAssignmentResponseInstructionsItemTypeMax = 40;
+
+export const publishAssignmentResponseInstructionsItemContentMax = 2000;
+
+export const publishAssignmentResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const PublishAssignmentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(publishAssignmentResponseInstructionsItemTypeMax),
+  "content": zod.string().max(publishAssignmentResponseInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string().uuid()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullish(),
+  "marksAllocated": zod.number().int(),
+  "deadlineDate": zod.string().regex(publishAssignmentResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "archivedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Copy an assignment into a new draft
+ */
+export const DuplicateAssignmentParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const DuplicateAssignmentHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const duplicateAssignmentResponseInstructionsItemTypeMax = 40;
+
+export const duplicateAssignmentResponseInstructionsItemContentMax = 2000;
+
+export const duplicateAssignmentResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const DuplicateAssignmentResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(duplicateAssignmentResponseInstructionsItemTypeMax),
+  "content": zod.string().max(duplicateAssignmentResponseInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string().uuid()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullish(),
+  "marksAllocated": zod.number().int(),
+  "deadlineDate": zod.string().regex(duplicateAssignmentResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "archivedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Give the class more time on a published assignment
+ */
+export const ExtendAssignmentDeadlineParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const ExtendAssignmentDeadlineHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const extendAssignmentDeadlineBodyDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const extendAssignmentDeadlineBodyDeadlineTimeRegExp = new RegExp('^\\d{2}:\\d{2}(:\\d{2})?$');
+
+
+export const ExtendAssignmentDeadlineBody = zod.object({
+  "deadlineDate": zod.string().regex(extendAssignmentDeadlineBodyDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().regex(extendAssignmentDeadlineBodyDeadlineTimeRegExp).optional()
+})
+
+export const extendAssignmentDeadlineResponseInstructionsItemTypeMax = 40;
+
+export const extendAssignmentDeadlineResponseInstructionsItemContentMax = 2000;
+
+export const extendAssignmentDeadlineResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const ExtendAssignmentDeadlineResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(extendAssignmentDeadlineResponseInstructionsItemTypeMax),
+  "content": zod.string().max(extendAssignmentDeadlineResponseInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string().uuid()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullish(),
+  "marksAllocated": zod.number().int(),
+  "deadlineDate": zod.string().regex(extendAssignmentDeadlineResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "archivedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Archive or cancel an assignment
+ */
+export const SetAssignmentStateParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const SetAssignmentStateHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const SetAssignmentStateBody = zod.object({
+  "state": zod.enum(['archived', 'cancelled'])
+})
+
+export const setAssignmentStateResponseInstructionsItemTypeMax = 40;
+
+export const setAssignmentStateResponseInstructionsItemContentMax = 2000;
+
+export const setAssignmentStateResponseDeadlineDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const SetAssignmentStateResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "subject": zod.string(),
+  "title": zod.string(),
+  "description": zod.string().nullable(),
+  "instructions": zod.array(zod.object({
+  "type": zod.string().max(setAssignmentStateResponseInstructionsItemTypeMax),
+  "content": zod.string().max(setAssignmentStateResponseInstructionsItemContentMax)
+})),
+  "attachedResourceIds": zod.array(zod.string().uuid()),
+  "assignmentKind": zod.enum(['homework', 'classwork', 'individual', 'group', 'project', 'revision', 'practical']),
+  "topic": zod.string().nullish(),
+  "marksAllocated": zod.number().int(),
+  "deadlineDate": zod.string().regex(setAssignmentStateResponseDeadlineDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "deadlineTime": zod.string().nullable(),
+  "allowResubmission": zod.boolean(),
+  "allowLate": zod.boolean(),
+  "allowedFileTypes": zod.array(zod.string()),
+  "state": zod.enum(['draft', 'published', 'scheduled', 'archived', 'cancelled']),
+  "publishedAt": zod.coerce.date().nullable(),
+  "archivedAt": zod.coerce.date().nullable(),
+  "files": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "uploadedAt": zod.coerce.date()
+})),
+  "submissionCount": zod.number().int(),
+  "gradedCount": zod.number().int(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Short-lived storage upload URLs for a learner's own submission files
+ */
+export const CreateSubmissionUploadTargetsParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid()
+})
+
+export const CreateSubmissionUploadTargetsHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const createSubmissionUploadTargetsBodyFilesItemNameMax = 250;
+
+
+export const createSubmissionUploadTargetsBodyFilesItemTypeMax = 120;
+
+export const createSubmissionUploadTargetsBodyFilesMax = 10;
+
+
+
+export const CreateSubmissionUploadTargetsBody = zod.object({
+  "files": zod.array(zod.object({
+  "name": zod.string().min(1).max(createSubmissionUploadTargetsBodyFilesItemNameMax),
+  "size": zod.number().int().min(1),
+  "type": zod.string().max(createSubmissionUploadTargetsBodyFilesItemTypeMax)
+})).min(1).max(createSubmissionUploadTargetsBodyFilesMax)
+})
+
+export const CreateSubmissionUploadTargetsResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "path": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "extension": zod.string(),
+  "kind": zod.enum(['pdf', 'word', 'powerpoint', 'image', 'spreadsheet', 'text', 'archive']),
+  "method": zod.enum(['PUT']),
+  "uploadUrl": zod.string(),
+  "headers": zod.record(zod.string(), zod.string()),
+  "expiresAt": zod.coerce.date()
+})),
+  "maxFileBytes": zod.number().int(),
+  "allowedTypes": zod.array(zod.string())
+})
+
+
+/**
+ * @summary Download one file a learner submitted for marking
+ */
+export const DownloadSubmissionFileParams = zod.object({
+  "assignmentId": zod.coerce.string().uuid(),
+  "submissionId": zod.coerce.string().uuid(),
+  "fileId": zod.coerce.string().uuid()
+})
+
+export const DownloadSubmissionFileHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const DownloadSubmissionFileResponse = zod.object({
+  "url": zod.string(),
+  "name": zod.string(),
+  "size": zod.number().int(),
+  "type": zod.string(),
+  "expiresAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Today's schedule for the learner's class
+ */
+export const GetTodayTimetableHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getTodayTimetableResponseDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetTodayTimetableResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "period": zod.number().int(),
+  "subject": zod.string(),
+  "teacher": zod.string(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "room": zod.string().nullable()
+})),
+  "date": zod.string().regex(getTodayTimetableResponseDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.')
+})
+
+
+/**
+ * @summary Full weekly timetable for the learner's class
+ */
+export const GetTimetableForWeekHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getTimetableForWeekResponseDataItemDayOfWeekMin = 0;
+export const getTimetableForWeekResponseDataItemDayOfWeekMax = 6;
+
+export const getTimetableForWeekResponseWeekStartRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetTimetableForWeekResponse = zod.object({
+  "data": zod.array(zod.object({
+  "dayOfWeek": zod.number().int().min(getTimetableForWeekResponseDataItemDayOfWeekMin).max(getTimetableForWeekResponseDataItemDayOfWeekMax),
+  "dayName": zod.string(),
+  "classes": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "period": zod.number().int(),
+  "subject": zod.string(),
+  "teacher": zod.string(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "room": zod.string().nullable()
+}))
+})),
+  "weekStart": zod.string().regex(getTimetableForWeekResponseWeekStartRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.')
+})
+
+
+/**
+ * @summary Timetable for a date (defaults to today)
+ */
+export const getTimetableForDateQueryDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+
+
+export const GetTimetableForDateQueryParams = zod.object({
+  "date": zod.coerce.string().regex(getTimetableForDateQueryDateRegExp).optional(),
+  "classId": zod.coerce.string().uuid().optional()
+})
+
+export const GetTimetableForDateHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const getTimetableForDateResponseDateRegExp = new RegExp('^\\d{4}-\\d{2}-\\d{2}$');
+export const getTimetableForDateResponseDayOfWeekMin = 0;
+export const getTimetableForDateResponseDayOfWeekMax = 6;
+
+
+
+export const GetTimetableForDateResponse = zod.object({
+  "data": zod.array(zod.object({
+  "id": zod.string().uuid(),
+  "period": zod.number().int(),
+  "subject": zod.string(),
+  "teacher": zod.string(),
+  "startTime": zod.string(),
+  "endTime": zod.string(),
+  "room": zod.string().nullable()
+})),
+  "date": zod.string().regex(getTimetableForDateResponseDateRegExp).describe('Calendar date (YYYY-MM-DD), no timezone.'),
+  "dayOfWeek": zod.number().int().min(getTimetableForDateResponseDayOfWeekMin).max(getTimetableForDateResponseDayOfWeekMax)
+})
+
+
+/**
+ * @summary Create or update a timetable period (staff and teachers)
+ */
+export const UpsertTimetableEntryHeader = zod.object({
+  "X-School-Id": zod.string().uuid().describe('The school the caller is acting in.')
+})
+
+export const upsertTimetableEntryBodyDayOfWeekMin = 0;
+export const upsertTimetableEntryBodyDayOfWeekMax = 6;
+
+
+export const upsertTimetableEntryBodyStartTimeRegExp = new RegExp('^\\d{2}:\\d{2}(:\\d{2})?$');
+export const upsertTimetableEntryBodyEndTimeRegExp = new RegExp('^\\d{2}:\\d{2}(:\\d{2})?$');
+export const upsertTimetableEntryBodySubjectMax = 100;
+
+export const upsertTimetableEntryBodyTeacherUserIdMax = 128;
+
+export const upsertTimetableEntryBodyRoomLocationMax = 100;
+
+
+
+export const UpsertTimetableEntryBody = zod.object({
+  "classId": zod.string().uuid(),
+  "dayOfWeek": zod.number().int().min(upsertTimetableEntryBodyDayOfWeekMin).max(upsertTimetableEntryBodyDayOfWeekMax),
+  "periodNumber": zod.number().int().min(1),
+  "startTime": zod.string().regex(upsertTimetableEntryBodyStartTimeRegExp),
+  "endTime": zod.string().regex(upsertTimetableEntryBodyEndTimeRegExp),
+  "subject": zod.string().min(1).max(upsertTimetableEntryBodySubjectMax),
+  "teacherUserId": zod.string().min(1).max(upsertTimetableEntryBodyTeacherUserIdMax),
+  "roomLocation": zod.string().max(upsertTimetableEntryBodyRoomLocationMax).optional()
+})
+
+export const UpsertTimetableEntryResponse = zod.object({
+  "id": zod.string().uuid(),
+  "classId": zod.string().uuid(),
+  "dayOfWeek": zod.number().int(),
+  "periodNumber": zod.number().int(),
+  "subject": zod.string(),
+  "startTime": zod.string(),
+  "endTime": zod.string()
+})
 
 

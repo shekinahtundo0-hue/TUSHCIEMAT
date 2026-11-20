@@ -18,7 +18,7 @@ import {
   SetCurrentTermParams,
   SetCurrentTermResponse,
 } from "@workspace/api-zod";
-import { inSchool, send } from "../../lib/context";
+import { inSchool, send, sendNoContent } from "../../lib/context";
 import type { AppDeps } from "../../lib/deps";
 import { parseInput } from "../../lib/errors";
 import { ANY_MEMBER, STAFF, STUDENT_VIEWERS } from "../../lib/roles";
@@ -87,7 +87,7 @@ export function academicRoutes(deps: AppDeps): Router {
   router.delete("/classes/:classId/teachers/:assignmentId", async (req, res) => {
     const { classId, assignmentId } = parseInput(RemoveTeacherAssignmentParams, req.params);
     await inSchool(database, req, res, { roles: STAFF, capability: "academics.manage" }, (tx, ctx) => removeTeacherAssignment(tx, ctx, classId, assignmentId));
-    res.status(204).end();
+    sendNoContent(res);
   });
 
   return router;

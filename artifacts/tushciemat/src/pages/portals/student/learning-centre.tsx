@@ -1,274 +1,217 @@
-import { useState, useMemo } from 'react';
-import { Search, Download, Bookmark, Eye, Filter, X } from 'lucide-react';
-import { useListLearningResources, type LearnerSummary } from '@workspace/api-client-react';
-import { Card, Input, Select, Button, Badge, Pagination } from '@/components/ui';
-import { ResourceCard } from '@/components/portals/student/ResourceCard';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import {
+  downloadResourceFile,
+  previewResourceFile,
+  useListLearningResources,
+  useListRecentResources,
+  useListBookmarkedResources,
+  useGetLearningResource,
+  useToggleBookmark,
+  getListBookmarkedResourcesQueryKey,
+  type ResourceType,
+} from '@workspace/api-client-react';
+import { FileLinks } from '@/components/portals/file-links';
+import { apiMessage } from '@/lib/api';
+import './learning-centre.css';
 
-interface LearningCentreProps {
-  studentData: LearnerSummary;
+const TYPE_OPTIONS: Array<{ value: ResourceType; label: string }> = [
+  { value: 'pdf', label: 'PDF' },
+  { value: 'docx', label: 'DOCX' },
+  { value: 'pptx', label: 'PPTX' },
+  { value: 'image', label: 'Image' },
+  { value: 'video', label: 'Video' },
+  { value: 'link', label: 'Link' },
+  { value: 'other', label: 'Other' },
+];
+
+const RESOURCE_ICONS: Record<string, string> = {
+  pdf: '📄', pptx: '🎨', docx: '📝', image: '🖼️', video: '🎥', link: '🔗', other: '📦',
+};
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const RESOURCE_TYPES = ['All', 'PDF', 'Video', 'Document', 'Image', 'Audio', 'Presentation'];
-const SORT_OPTIONS = ['Recent', 'Name', 'Size', 'Type'];
-
-export default function LearningCentre({ studentData }: LearningCentreProps) {
+export const LearningCentre = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState('All');
-  const [selectedSubject, setSelectedSubject] = useState('All');
-  const [sortBy, setSortBy] = useState('Recent');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [activeTab, setActiveTab] = useState('all');
-  const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
+  const [selectedType, setSelectedType] = useState<ResourceType | 'all'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'recent' | 'bookmarked'>('all');
+  const [page, setPage] = useState(1);
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const limit = 12;
 
-  const resources = useListLearningResources({
-    query: {
-      enabled: true,
-      refetchInterval: 60000,
-    },
+  const resourcesQuery = useListLearningResources({
+    resourceType: selectedType !== 'all' ? selectedType : undefined,
+    limit,
+    offset: (page - 1) * limit,
   });
+  const recentQuery = useListRecentResources({ limit });
+  const bookmarksQuery = useListBookmarkedResources();
+  const detail = useGetLearningResource(
+    viewingId ?? '',
+    { query: { enabled: !!viewingId } },
+  );
+  const toggleBookmark = useToggleBookmark();
 
-  // Get unique subjects from resources
-  const subjects = useMemo(() => {
-    if (!resources.data) return [];
-    const uniqueSubjects = Array.from(new Set(resources.data.map(r => r.subject)));
-    return ['All', ...uniqueSubjects];
-  }, [resources.data]);
+  const bookmarkedIds = new Set((bookmarksQuery.data?.data ?? []).map((b) => b.id));
+  const totalPages = Math.ceil((resourcesQuery.data?.total ?? 0) / limit);
 
-  // Filter and sort resources
-  const filteredResources = useMemo(() => {
-    let result = resources.data || [];
+  const matchesSearch = (title: string, description: string | null) => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return true;
+    return title.toLowerCase().includes(term) || (description ?? '').toLowerCase().includes(term);
+  };
 
-    // Text search
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(r =>
-        r.title.toLowerCase().includes(term) ||
-        r.description?.toLowerCase().includes(term)
-      );
-    }
+  const allResources = (resourcesQuery.data?.data ?? []).filter((r) => matchesSearch(r.title, r.description));
+  const recentResources = (recentQuery.data?.data ?? []).filter((r) => matchesSearch(r.title, null));
+  const bookmarkedResources = (bookmarksQuery.data?.data ?? []).filter((r) => matchesSearch(r.title, r.description));
 
-    // Type filter
-    if (selectedType !== 'All') {
-      result = result.filter(r => r.resourceType.toUpperCase() === selectedType.toUpperCase());
-    }
+  const handleToggleBookmark = (resourceId: string) => {
+    toggleBookmark.mutate({ resourceId }, {
+      onSuccess: () => { void queryClient.invalidateQueries({ queryKey: getListBookmarkedResourcesQueryKey() }); },
+    });
+  };
 
-    // Subject filter
-    if (selectedSubject !== 'All') {
-      result = result.filter(r => r.subject === selectedSubject);
-    }
-
-    // Tab filter
-    if (activeTab === 'bookmarked') {
-      result = result.filter(r => bookmarked.has(r.id));
-    }
-
-    // Sorting
-    switch (sortBy) {
-      case 'Name':
-        result.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      case 'Size':
-        result.sort((a, b) => (b.fileSizeBytes || 0) - (a.fileSizeBytes || 0));
-        break;
-      case 'Recent':
-      default:
-        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    }
-
-    return result;
-  }, [resources.data, searchTerm, selectedType, selectedSubject, sortBy, activeTab, bookmarked]);
-
-  // Pagination
-  const itemsPerPage = 12;
-  const totalPages = Math.ceil(filteredResources.length / itemsPerPage);
-  const paginatedResources = filteredResources.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+  const renderCard = (resource: { id: string; title: string; description?: string | null; resourceType: ResourceType; createdAt?: Date; fileSizeBytes?: number | null }) => (
+    <div key={resource.id} className="resource-card">
+      <div className="card-header">
+        <span className="icon">{RESOURCE_ICONS[resource.resourceType] ?? '📦'}</span>
+        <span className="type-badge">{resource.resourceType.toUpperCase()}</span>
+        <button
+          className={`bookmark-btn ${bookmarkedIds.has(resource.id) ? 'bookmarked' : ''}`}
+          onClick={() => handleToggleBookmark(resource.id)}
+          disabled={toggleBookmark.isPending || bookmarksQuery.isLoading || bookmarksQuery.isError}
+          title={bookmarkedIds.has(resource.id) ? 'Remove bookmark' : 'Bookmark'}
+        >
+          {bookmarkedIds.has(resource.id) ? '⭐' : '☆'}
+        </button>
+      </div>
+      <div className="card-body">
+        <h3>{resource.title}</h3>
+        {resource.description && <p>{resource.description}</p>}
+      </div>
+      <div className="card-meta">
+        {resource.createdAt && <span className="date">Added: {new Date(resource.createdAt).toLocaleDateString()}</span>}
+        {resource.fileSizeBytes ? <span className="size">{formatBytes(resource.fileSizeBytes)}</span> : null}
+      </div>
+      <div className="card-actions">
+        <button className="btn btn-primary" onClick={() => setViewingId(resource.id)}>View</button>
+      </div>
+    </div>
   );
 
-  const handleBookmark = (resourceId: string) => {
-    const newBookmarked = new Set(bookmarked);
-    if (newBookmarked.has(resourceId)) {
-      newBookmarked.delete(resourceId);
-    } else {
-      newBookmarked.add(resourceId);
-    }
-    setBookmarked(newBookmarked);
-    // In a real app, this would call an API to persist the bookmark
-  };
-
-  const handleDownload = (resource: any) => {
-    if (resource.downloadUrl) {
-      window.open(resource.downloadUrl, '_blank');
-    }
-  };
-
-  const handleReset = () => {
-    setSearchTerm('');
-    setSelectedType('All');
-    setSelectedSubject('All');
-    setSortBy('Recent');
-    setCurrentPage(1);
-  };
-
-  const isFiltered = searchTerm || selectedType !== 'All' || selectedSubject !== 'All' || sortBy !== 'Recent';
+  const activeQuery = activeTab === 'all' ? resourcesQuery : activeTab === 'recent' ? recentQuery : bookmarksQuery;
+  const visibleResources = activeTab === 'all' ? allResources : activeTab === 'recent' ? recentResources : bookmarkedResources;
 
   return (
-    <div className="learning-centre space-y-6">
-      {/* Header */}
-      <div className="learning-header">
-        <h2 className="text-2xl font-bold text-gray-900">Learning Centre</h2>
-        <p className="text-gray-600 mt-1">Access all learning materials shared with your class</p>
+    <div className="learning-centre">
+      <div className="page-header">
+        <h1>Learning Centre</h1>
+        <p>Access learning materials for your class</p>
       </div>
 
-      {/* Search Bar */}
-      <div className="search-container">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <Input
+      <div className="filters-section">
+        <div className="search-bar">
+          <input
             type="text"
-            placeholder="Search learning materials..."
+            placeholder="Search materials..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="pl-10 w-full"
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+            className="search-input"
           />
         </div>
+        <div className="filter-controls">
+          <select
+            value={selectedType}
+            onChange={(e) => { setSelectedType(e.target.value as ResourceType | 'all'); setPage(1); }}
+            className="filter-select"
+          >
+            <option value="all">Type: All</option>
+            {TYPE_OPTIONS.map((t) => (
+              <option key={t.value} value={t.value}>Type: {t.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card title="Filters" className="filter-card">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-            <Select
-              value={selectedSubject}
-              onChange={(e) => {
-                setSelectedSubject(e.target.value);
-                setCurrentPage(1);
-              }}
-              options={subjects}
-            />
+      <div className="tabs">
+        <button className={`tab ${activeTab === 'all' ? 'active' : ''}`} onClick={() => { setActiveTab('all'); setPage(1); }}>
+          All Materials
+        </button>
+        <button className={`tab ${activeTab === 'recent' ? 'active' : ''}`} onClick={() => { setActiveTab('recent'); setPage(1); }}>
+          Recent
+        </button>
+        <button className={`tab ${activeTab === 'bookmarked' ? 'active' : ''}`} onClick={() => { setActiveTab('bookmarked'); setPage(1); }}>
+          Bookmarked ({bookmarksQuery.data?.data?.length ?? 0})
+        </button>
+      </div>
+
+      {toggleBookmark.isError && <p role="alert">{apiMessage(toggleBookmark.error, 'Bookmark could not be updated.')}</p>}
+      {bookmarksQuery.isError && <p role="alert">{apiMessage(bookmarksQuery.error, 'Bookmarks could not be loaded.')}</p>}
+      <div className="resources-grid">
+        {activeQuery.isLoading ? (
+          <div className="empty-state"><p>Loading materials…</p></div>
+        ) : activeQuery.isError ? (
+          <div className="empty-state"><p>{apiMessage(activeQuery.error, 'Materials could not be loaded.')}</p></div>
+        ) : visibleResources.length === 0 ? (
+          <div className="empty-state">
+            <span className="empty-icon">📭</span>
+            <p>No materials found</p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
-            <Select
-              value={selectedType}
-              onChange={(e) => {
-                setSelectedType(e.target.value);
-                setCurrentPage(1);
-              }}
-              options={RESOURCE_TYPES}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sort</label>
-            <Select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              options={SORT_OPTIONS}
-            />
-          </div>
-          {isFiltered && (
-            <div className="flex items-end">
-              <Button
-                onClick={handleReset}
-                className="flex items-center gap-2 w-full"
-              >
-                <X size={16} />
-                Reset
-              </Button>
-            </div>
+        ) : (
+          visibleResources.map((resource) => renderCard(resource))
+        )}
+      </div>
+
+      {activeTab === 'all' && totalPages > 1 && (
+        <div className="pagination">
+          <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} className="pagination-btn">← Previous</button>
+          <span className="page-info">Page {page} of {totalPages}</span>
+          <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} className="pagination-btn">Next →</button>
+        </div>
+      )}
+
+      {viewingId && (
+        <div className="resource-detail-panel" style={{ marginTop: 24, padding: 20, border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff' }}>
+          {detail.isLoading ? (
+            <p>Loading resource…</p>
+          ) : detail.isError || !detail.data ? (
+            <p>{apiMessage(detail.error, 'Resource could not be loaded.')}</p>
+          ) : (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 style={{ margin: 0 }}>{detail.data.title}</h2>
+                <button className="btn" onClick={() => setViewingId(null)}>✕ Close</button>
+              </div>
+              {detail.data.description && <p>{detail.data.description}</p>}
+              {detail.data.learningObjectives.length > 0 && (
+                <>
+                  <h4>Learning Objectives</h4>
+                  <ul>
+                    {detail.data.learningObjectives.map((objective, idx) => <li key={idx}>{objective}</li>)}
+                  </ul>
+                </>
+              )}
+              {detail.data.files.length > 0 ? (
+                <div style={{ marginTop: 12 }}>
+                  <h4>Files</h4>
+                  <FileLinks files={detail.data.files} testId={`resource-${detail.data.id}`}
+                    link={(fileId, mode) => (mode === 'preview'
+                      ? previewResourceFile(viewingId, fileId)
+                      : downloadResourceFile(viewingId, fileId))} />
+                  <p style={{ color: '#6b7280', fontSize: 12 }}>These are the files your teacher shared with your class, so downloads are limited to this material.</p>
+                </div>
+              ) : (
+                <p style={{ color: '#6b7280', fontSize: 13 }}>This material has no file attached yet.</p>
+              )}
+            </>
           )}
         </div>
-      </Card>
-
-      {/* Tab Navigation */}
-      <Tabs>
-        <div className="flex gap-2 border-b">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === 'all'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            All Materials
-          </button>
-          <button
-            onClick={() => setActiveTab('bookmarked')}
-            className={`px-4 py-2 font-medium transition-colors ${
-              activeTab === 'bookmarked'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Bookmarked ({bookmarked.size})
-          </button>
-        </div>
-      </Tabs>
-
-      {/* Resources Grid */}
-      {resources.isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <div className="text-gray-500 text-center">
-            <div className="animate-spin">
-              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </div>
-            <p className="mt-3">Loading materials...</p>
-          </div>
-        </div>
-      ) : resources.isError ? (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-red-800">
-          <p className="font-semibold">Could not load materials</p>
-          <p className="text-sm mt-1">There was an error loading the learning resources. Please try again.</p>
-          <Button
-            onClick={() => resources.refetch()}
-            className="mt-4"
-          >
-            Retry
-          </Button>
-        </div>
-      ) : paginatedResources.length === 0 ? (
-        <div className="bg-gray-50 rounded-lg p-12 text-center">
-          <Eye size={48} className="mx-auto text-gray-400 mb-3" />
-          <p className="text-gray-900 font-semibold">No materials found</p>
-          <p className="text-gray-600 text-sm mt-1">
-            {isFiltered ? 'Try adjusting your search or filter criteria.' : 'Materials will appear here once they are shared with your class.'}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginatedResources.map((resource) => (
-              <ResourceCard
-                key={resource.id}
-                resource={resource}
-                isBookmarked={bookmarked.has(resource.id)}
-                onBookmark={() => handleBookmark(resource.id)}
-                onDownload={() => handleDownload(resource)}
-              />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <Pagination
-              current={currentPage}
-              total={totalPages}
-              onChange={(page) => {
-                setCurrentPage(page);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-              }}
-            />
-          )}
-        </>
       )}
     </div>
   );
-}
+};

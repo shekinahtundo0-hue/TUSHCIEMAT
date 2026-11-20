@@ -43,6 +43,69 @@
       "when": 1794822152114,
       "tag": "0005_school_capability_security",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794901346855,
+      "tag": "0006_classroom_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794901346856,
+      "tag": "0007_results_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794901346857,
+      "tag": "0008_communications_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794901346858,
+      "tag": "0009_staff_module",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794901346859,
+      "tag": "0010_capabilities_extend",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794901346860,
+      "tag": "0011_portal_modules_security",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1794901346861,
+      "tag": "0012_classroom_access_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794901346862,
+      "tag": "0013_digital_classroom_workflow",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794901346863,
+      "tag": "0014_learning_materials_library",
+      "breakpoints": true
     }
   ]
 }

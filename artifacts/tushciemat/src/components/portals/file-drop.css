@@ -1,0 +1,68 @@
+.file-drop { display: grid; gap: 10px; }
+
+.file-drop-zone {
+  padding: 18px 16px;
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  text-align: center;
+  color: #4d6b5b;
+  border: 1.5px dashed #cddccd;
+  border-radius: 11px;
+  background: #f8faf6;
+  transition: border-color 150ms ease-out, background 150ms ease-out;
+}
+.file-drop-zone.is-dragging { border-color: #3c6953; background: #eef5ee; }
+.file-drop-zone.is-disabled { opacity: .6; }
+.file-drop-zone p { margin: 0; font-size: 11px; }
+.file-drop-zone small { color: #829087; font-size: 9px; line-height: 1.5; }
+.file-drop-pick {
+  margin-top: 4px;
+  padding: 7px 13px;
+  border: 1px solid #cfdcd0;
+  border-radius: 7px;
+  background: #fff;
+  color: #2f5d49;
+  font: 700 10px/1 inherit;
+  cursor: pointer;
+}
+.file-drop-pick:hover { border-color: #3c6953; }
+
+.file-drop-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.file-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto minmax(70px, 120px) auto auto;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid #e8ece5;
+  border-radius: 8px;
+  background: #fff;
+  color: #4d6b5b;
+  font-size: 10px;
+}
+.file-row.is-failed { border-color: #ecd8d1; background: #fdf8f6; }
+.file-row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.file-row-size { color: #829087; font: 9px/1 'IBM Plex Mono', monospace; }
+.file-row-state { color: #6d8176; font-size: 9px; text-align: right; }
+.file-row-error { color: #96594b; font-size: 9px; line-height: 1.4; }
+.file-row-bar { height: 5px; border-radius: 10px; background: #e8eee6; overflow: hidden; }
+.file-row-bar i { display: block; height: 100%; background: #3c6953; transition: width 200ms ease-out; }
+.file-row-action {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #829187;
+  cursor: pointer;
+}
+.file-row-action:hover { background: #f0f4ee; color: #2f5d49; }
+
+@media (max-width: 767px) {
+  .file-row { grid-template-columns: 16px minmax(0, 1fr) auto; row-gap: 6px; }
+  .file-row-bar { grid-column: 2 / span 2; }
+  .file-row-state, .file-row-error { grid-column: 2 / span 2; text-align: left; }
+}

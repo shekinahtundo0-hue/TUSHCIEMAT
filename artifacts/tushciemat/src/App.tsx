@@ -16,7 +16,14 @@ import { AnnouncementsPage, NotificationsPage } from '@/pages/communications';
 import { CreateSchoolPage, FindSchoolPage, JoinSchoolPage, OnboardingPage } from '@/pages/onboarding';
 import { OverviewPage } from '@/pages/overview';
 import { PeoplePage } from '@/pages/people';
-import { FamilyPage, LearnPage, PlatformPage } from '@/pages/portals';
+import { PlatformPage } from '@/pages/portals';
+import { FamilyPage } from '@/pages/portals/FamilyPage';
+import { LearnPage } from '@/pages/portals/LearnPage';
+import { TeacherAssignmentsPage } from '@/pages/portals/teacher/assignments';
+import { AssignmentEditorPage } from '@/pages/portals/teacher/assignment-editor';
+import { MaterialEditorPage } from '@/pages/portals/teacher/material-editor';
+import { TeacherMaterialsPage } from '@/pages/portals/teacher/materials';
+import { TeacherSubmissionsPage } from '@/pages/portals/teacher/submissions';
 import { LandingPage, LandingSkeleton, NotFound, SignInPage, SignUpPage, VerifyEmailPage } from '@/pages/public';
 import { AccessRequestsPage, MyRequestsPage } from '@/pages/requests';
 import { SchoolSettingsPage } from '@/pages/school-settings';
@@ -99,11 +106,20 @@ function Routes() {
     <Route path="/teach/attendance"><Protected roles={['teacher']}><AttendancePage portal="teach" /></Protected></Route>
     <Route path="/teach/students"><Protected roles={['teacher']}><StudentsPage portal="teach" /></Protected></Route>
     <Route path="/teach/announcements"><Protected roles={['teacher', 'tutor']}><AnnouncementsPage portal="teach" /></Protected></Route>
+    <Route path="/teach/materials"><Protected roles={['teacher']}><TeacherMaterialsPage /></Protected></Route>
+    <Route path="/teach/materials/new"><Protected roles={['teacher']}><MaterialEditorPage /></Protected></Route>
+    <Route path="/teach/materials/edit"><Protected roles={['teacher']}><MaterialEditorPage /></Protected></Route>
+    <Route path="/teach/assignments"><Protected roles={['teacher']}><TeacherAssignmentsPage /></Protected></Route>
+    <Route path="/teach/assignments/new"><Protected roles={['teacher']}><AssignmentEditorPage /></Protected></Route>
+    <Route path="/teach/assignments/edit"><Protected roles={['teacher']}><AssignmentEditorPage /></Protected></Route>
+    <Route path="/teach/submissions"><Protected roles={['teacher']}><TeacherSubmissionsPage /></Protected></Route>
 
     <Route path="/family"><Protected roles={['parent']}><FamilyPage /></Protected></Route>
     <Route path="/family/announcements"><Protected roles={['parent']}><AnnouncementsPage portal="family" /></Protected></Route>
+    <Route path="/family/:rest*"><Protected roles={['parent']}><FamilyPage /></Protected></Route>
     <Route path="/learn"><Protected roles={['student']}><LearnPage /></Protected></Route>
     <Route path="/learn/announcements"><Protected roles={['student']}><AnnouncementsPage portal="learn" /></Protected></Route>
+    <Route path="/learn/:rest*"><Protected roles={['student']}><LearnPage /></Protected></Route>
     <Route path="/platform"><Protected platform><PlatformPage /></Protected></Route>
 
     <Route component={NotFound} />

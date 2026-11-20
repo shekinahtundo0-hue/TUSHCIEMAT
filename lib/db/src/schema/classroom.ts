@@ -14,7 +14,8 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { classesTable } from "./academics";
+import { classesTable, termsTable } from "./academics";
+import type { StoredAttachment } from "./assignments";
 import { userProfilesTable } from "./identity";
 import { schoolsTable } from "./schools";
 import { studentsTable } from "./students";
@@ -26,6 +27,22 @@ export const resourceTypeEnum = pgEnum("resource_type", [
   "image",
   "video",
   "link",
+  "spreadsheet",
+  "text",
+  "archive",
+  "other",
+]);
+
+export const resourceCategoryEnum = pgEnum("resource_category", [
+  "class_notes",
+  "revision_notes",
+  "worksheet",
+  "reading_material",
+  "presentation",
+  "study_guide",
+  "past_paper",
+  "exam_resources",
+  "textbook",
   "other",
 ]);
 
@@ -42,6 +59,9 @@ export const learningResourcesTable = pgTable(
     lessonId: uuid("lesson_id").references(() => classLessonsTable.id, {
       onDelete: "set null",
     }),
+    termId: uuid("term_id").references(() => termsTable.id, {
+      onDelete: "set null",
+    }),
     title: text("title").notNull(),
     description: text("description"),
     learningObjectives: jsonb("learning_objectives")
@@ -49,6 +69,9 @@ export const learningResourcesTable = pgTable(
       .notNull()
       .default([]),
     resourceType: resourceTypeEnum("resource_type").notNull(),
+    subject: text("subject"),
+    category: resourceCategoryEnum("category").notNull().default("class_notes"),
+    attachments: jsonb("attachments").$type<StoredAttachment[]>().notNull().default([]),
     filePath: text("file_path"),
     fileName: text("file_name"),
     fileSizeBytes: integer("file_size_bytes"),
@@ -73,6 +96,8 @@ export const learningResourcesTable = pgTable(
   (table) => [
     index("learning_resources_class_idx").on(table.schoolId, table.classId),
     index("learning_resources_lesson_idx").on(table.lessonId),
+    index("learning_resources_term_idx").on(table.termId),
+    index("learning_resources_class_category_idx").on(table.schoolId, table.classId, table.category),
     index("learning_resources_visible_idx")
       .on(table.classId, table.publishedAt)
       .where(sql`${table.isVisibleToStudents} AND ${table.deletedAt} IS NULL`),

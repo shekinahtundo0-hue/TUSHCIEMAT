@@ -109,6 +109,7 @@ export async function buildFixture(api: pg.Pool): Promise<Fixture> {
         "students.manage", "academics.manage", "attendance.manage", "people.manage",
         "requests.review", "settings.manage", "announcements.manage",
         "assessments.manage", "results.publish", "resources.manage",
+        "staff.manage", "workload.manage", "communications.manage", "classroom.manage",
       ],
     ]);
     const class1 = await one(

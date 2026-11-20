@@ -1,7 +1,7 @@
 import { and, eq, desc, asc, gte, lte, sql } from "drizzle-orm";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { Tx } from "../../lib/database";
 import * as schema from "@workspace/db/schema";
-import type { SchoolContext } from "../../lib/context";
+import { audit, type SchoolContext } from "../../lib/context";
 import { conflict, notFound } from "../../lib/errors";
 
 /**
@@ -11,7 +11,7 @@ import { conflict, notFound } from "../../lib/errors";
 
 // Create a lesson within a class
 export async function createLesson(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   input: { topic?: string; unit?: string; chapter?: string; lessonName: string; orderIndex?: number },
@@ -47,7 +47,7 @@ export async function createLesson(
     .returning();
 
   // Log action
-  await ctx.audit("lesson.created", "class_lesson", lesson[0].id, {
+  await audit(tx, ctx, "lesson.created", "class_lesson", lesson[0].id, {
     classId,
     topic: input.topic,
   });
@@ -57,7 +57,7 @@ export async function createLesson(
 
 // Create a learning resource
 export async function createLearningResource(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   input: {
@@ -99,7 +99,7 @@ export async function createLearningResource(
     })
     .returning();
 
-  await ctx.audit("resource.created", "learning_resource", resource[0].id, {
+  await audit(tx, ctx, "resource.created", "learning_resource", resource[0].id, {
     classId,
     title: input.title,
   });
@@ -109,7 +109,7 @@ export async function createLearningResource(
 
 // List learning resources for a class
 export async function listLearningResources(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   options: { page: number; limit: number; lessonId?: string; resourceType?: string },
@@ -156,7 +156,7 @@ export async function listLearningResources(
 
 // Update resource metadata
 export async function updateLearningResource(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   resourceId: string,
@@ -168,7 +168,7 @@ export async function updateLearningResource(
     fileName: string;
     fileSizeBytes: number;
     lessonId: string | null;
-    deletedAt: string;
+    deletedAt: Date | null;
   }>,
 ): Promise<schema.LearningResource> {
   const resource = await tx
@@ -193,14 +193,14 @@ export async function updateLearningResource(
     .where(eq(schema.learningResourcesTable.id, resourceId as any))
     .returning();
 
-  await ctx.audit("resource.updated", "learning_resource", resourceId as any, input);
+  await audit(tx, ctx, "resource.updated", "learning_resource", resourceId, input);
 
   return updated[0];
 }
 
 // Publish resource (immediate or schedule)
 export async function publishResource(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   resourceId: string,
@@ -234,7 +234,7 @@ export async function publishResource(
     .where(eq(schema.learningResourcesTable.id, resourceId as any))
     .returning();
 
-  await ctx.audit("resource.published", "learning_resource", resourceId as any, input);
+  await audit(tx, ctx, "resource.published", "learning_resource", resourceId, input);
 
   // Create notification for students if published immediately
   if (input.publishImmediately) {
@@ -246,7 +246,7 @@ export async function publishResource(
 
 // Get student activity for a class
 export async function getStudentActivityForClass(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   ctx: SchoolContext,
   classId: string,
   page: number = 1,
@@ -314,7 +314,7 @@ export async function getStudentActivityForClass(
 
 // Get my classrooms (student view)
 export async function getMyClassrooms(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   schoolId: string,
   userId: string,
 ): Promise<
@@ -360,7 +360,7 @@ export async function getMyClassrooms(
 
 // Get lesson details with resources
 export async function getLessonDetails(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   classId: string,
   lessonId: string,
   userId: string,
@@ -400,7 +400,7 @@ export async function getLessonDetails(
 
 // Get resource details with access logging
 export async function getResourceDetails(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   classId: string,
   resourceId: string,
   userId: string,
@@ -444,7 +444,7 @@ export async function getResourceDetails(
 
 // Bookmark a lesson
 export async function bookmarkResource(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   classId: string,
   resourceId: string,
   userId: string,
@@ -482,7 +482,7 @@ export async function bookmarkResource(
 
 // Mark lesson complete
 export async function markLessonComplete(
-  tx: NodePgDatabase<typeof schema>,
+  tx: Tx,
   classId: string,
   lessonId: string,
   userId: string,

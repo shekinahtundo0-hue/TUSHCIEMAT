@@ -24,5 +24,9 @@ export const SchoolCapability = {
   assessmentsmanage: 'assessments.manage',
   resultspublish: 'results.publish',
   resourcesmanage: 'resources.manage',
+  staffmanage: 'staff.manage',
+  workloadmanage: 'workload.manage',
+  communicationsmanage: 'communications.manage',
+  classroommanage: 'classroom.manage',
   recordsdelete: 'records.delete',
 } as const;

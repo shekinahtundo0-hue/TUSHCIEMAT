@@ -73,7 +73,7 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
                     <p className="font-semibold">{activity.title}</p>
                     <p className="text-sm opacity-75">{activity.description}</p>
                     <p className="text-xs opacity-60 mt-2">
-                      {formatDate(activity.timestamp, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      {formatDate(activity.timestamp.toISOString(), { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>

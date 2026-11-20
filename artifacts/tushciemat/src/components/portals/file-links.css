@@ -1,0 +1,14 @@
+.file-links { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; }
+.file-link { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; align-items: center; gap: 9px; padding: 7px 9px; border: 1px solid #eef1ec; border-radius: 8px; background: #fafbf8; }
+.file-link-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #33473c; font: 600 10.5px/1.4 inherit; }
+.file-link-size { color: #8b988e; font: 9px/1 'IBM Plex Mono', monospace; }
+.file-link-action { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; border: 1px solid #dfe7dd; border-radius: 7px; background: #fff; color: #40664f; font: 600 9.5px/1 inherit; cursor: pointer; }
+.file-link-action:hover:not(:disabled) { border-color: #3c6953; }
+.file-link-action:disabled { opacity: .55; cursor: default; }
+.file-link-error { color: #96594b; font-size: 10px; }
+.file-link-empty { display: flex; align-items: center; gap: 6px; margin: 0; color: #8b988e; font-size: 10px; }
+
+@media (max-width: 767px) {
+  .file-link { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
+  .file-link-action { justify-self: start; }
+}

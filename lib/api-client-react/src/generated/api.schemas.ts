@@ -58,11 +58,15 @@ export const SchoolCapability = {
   assessmentsmanage: 'assessments.manage',
   resultspublish: 'results.publish',
   resourcesmanage: 'resources.manage',
+  staffmanage: 'staff.manage',
+  workloadmanage: 'workload.manage',
+  communicationsmanage: 'communications.manage',
+  classroommanage: 'classroom.manage',
   recordsdelete: 'records.delete',
 } as const;
 
 export interface MemberCapabilitiesInput {
-  /** @maxItems 11 */
+  /** @maxItems 15 */
   capabilities: SchoolCapability[];
 }
 
@@ -873,6 +877,1014 @@ export interface SchoolSettingsInput {
   discoverable: boolean;
 }
 
+export interface AssessmentSummary {
+  id: string;
+  subject: string;
+  maxMarks: number;
+  termName: string;
+}
+
+export interface MyAssessmentsPage {
+  data: AssessmentSummary[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface PublishedMark {
+  id: string;
+  assessmentId: string;
+  subject: string;
+  maxMarks: number;
+  /** @nullable */
+  marksObtained: number | null;
+  /** @nullable */
+  feedback: string | null;
+  /** @nullable */
+  markedAt: string | null;
+}
+
+export interface PublishedMarksPage {
+  data: PublishedMark[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface SubjectMark {
+  id: string;
+  assessmentId: string;
+  /** @nullable */
+  marksObtained: number | null;
+  /** @nullable */
+  feedback: string | null;
+  /** @nullable */
+  markedAt: string | null;
+}
+
+export interface SubjectResults {
+  data: SubjectMark[];
+  subject: string;
+  /** @nullable */
+  averageTrend: number | null;
+}
+
+export interface SubjectResultRow {
+  subject: string;
+  /** @nullable */
+  totalMarks: number | null;
+  /** @nullable */
+  averagePercentage: number | null;
+  /** @nullable */
+  grade: string | null;
+  /** @nullable */
+  position: number | null;
+}
+
+export type TermResultsTermData = {
+  startsOn: CalendarDate;
+  endsOn: CalendarDate;
+};
+
+export interface TermResults {
+  termId: string;
+  termName: string;
+  termData: TermResultsTermData;
+  subjectResults: SubjectResultRow[];
+  /** @nullable */
+  overallAverage: number | null;
+  /** @nullable */
+  classPosition: number | null;
+}
+
+export type AssessmentResultTerm = {
+  id: string;
+  name: string;
+  startsOn: CalendarDate;
+  endsOn: CalendarDate;
+};
+
+export type AssessmentResultClass = {
+  id: string;
+  name: string;
+};
+
+export type AssessmentResultStudentMark = {
+  /** @nullable */
+  marksObtained: number | null;
+  /** @nullable */
+  feedback: string | null;
+  submissionStatus: string;
+  /** @nullable */
+  markedAt: string | null;
+} | null;
+
+export interface AssessmentResult {
+  id: string;
+  subject: string;
+  maxMarks: number;
+  assessmentTypeId: string;
+  term: AssessmentResultTerm;
+  class: AssessmentResultClass;
+  studentMark: AssessmentResultStudentMark;
+  isPublished: boolean;
+}
+
+export type PublishResultsInputStatus = typeof PublishResultsInputStatus[keyof typeof PublishResultsInputStatus];
+
+
+export const PublishResultsInputStatus = {
+  draft: 'draft',
+  pending_review: 'pending_review',
+  approved: 'approved',
+  published: 'published',
+} as const;
+
+export interface PublishResultsInput {
+  termId: string;
+  classId?: string;
+  status: PublishResultsInputStatus;
+}
+
+export interface PublishResultsReceipt {
+  success: boolean;
+  status: string;
+}
+
+export interface ChildMark {
+  id: string;
+  subject: string;
+  /** @nullable */
+  marksObtained: number | null;
+  maxMarks: number;
+  /** @nullable */
+  feedback: string | null;
+  /** @nullable */
+  markedAt: string | null;
+}
+
+export interface ChildResults {
+  data: ChildMark[];
+  studentId: string;
+}
+
+export type AssignmentStatus = typeof AssignmentStatus[keyof typeof AssignmentStatus];
+
+
+export const AssignmentStatus = {
+  not_started: 'not_started',
+  in_progress: 'in_progress',
+  submitted: 'submitted',
+  graded: 'graded',
+  overdue: 'overdue',
+} as const;
+
+export interface InstructionItem {
+  /** @maxLength 40 */
+  type: string;
+  /** @maxLength 2000 */
+  content: string;
+}
+
+export type AssignmentKind = typeof AssignmentKind[keyof typeof AssignmentKind];
+
+
+export const AssignmentKind = {
+  homework: 'homework',
+  classwork: 'classwork',
+  individual: 'individual',
+  group: 'group',
+  project: 'project',
+  revision: 'revision',
+  practical: 'practical',
+} as const;
+
+export interface AssignmentSummary {
+  id: string;
+  classId: string;
+  subject: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  deadlineDate: CalendarDate;
+  /** @nullable */
+  deadlineTime: string | null;
+  marksAllocated: number;
+  assignmentKind: AssignmentKind;
+  allowLate: boolean;
+  status: AssignmentStatus;
+  createdAt: string;
+}
+
+export interface AssignmentsPage {
+  data: AssignmentSummary[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface StoredFile {
+  id: string;
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+  uploadedAt: string;
+}
+
+export interface AssignmentSubmission {
+  id: string;
+  /** @nullable */
+  submissionText: string | null;
+  submittedFiles: StoredFile[];
+  /** @nullable */
+  submittedAt: string | null;
+  /** @nullable */
+  marksObtained: number | null;
+  /** @nullable */
+  feedback: string | null;
+  /** @nullable */
+  markedAt: string | null;
+  status: AssignmentStatus;
+  isLate: boolean;
+}
+
+export type AssignmentDetailState = typeof AssignmentDetailState[keyof typeof AssignmentDetailState];
+
+
+export const AssignmentDetailState = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+  archived: 'archived',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AssignmentDetail {
+  id: string;
+  subject: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  instructions: InstructionItem[];
+  attachedResourceIds: string[];
+  assignmentKind: AssignmentKind;
+  /** @nullable */
+  topic: string | null;
+  marksAllocated: number;
+  deadlineDate: CalendarDate;
+  /** @nullable */
+  deadlineTime: string | null;
+  allowResubmission: boolean;
+  allowLate: boolean;
+  allowedFileTypes: string[];
+  state: AssignmentDetailState;
+  createdAt: string;
+  files: StoredFile[];
+  submission: AssignmentSubmission | null;
+  status: AssignmentStatus;
+}
+
+export interface StoredFileInput {
+  id: string;
+  /** @maxLength 1000 */
+  path: string;
+  /** @maxLength 250 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @maxLength 120 */
+  type: string;
+}
+
+export interface SubmitAssignmentInput {
+  /** @maxLength 20000 */
+  submissionText?: string;
+  /** @maxItems 10 */
+  files?: StoredFileInput[];
+}
+
+export interface SubmissionReceipt {
+  success: boolean;
+  id: string;
+  submittedAt: string;
+  status: string;
+  isLate: boolean;
+}
+
+export interface UpdateSubmissionResponse {
+  success: boolean;
+  status: string;
+}
+
+export type CreateAssignmentInputPublish = typeof CreateAssignmentInputPublish[keyof typeof CreateAssignmentInputPublish];
+
+
+export const CreateAssignmentInputPublish = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+} as const;
+
+export interface CreateAssignmentInput {
+  classId: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  subject: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  title: string;
+  /** @maxLength 5000 */
+  description?: string;
+  /** @maxItems 50 */
+  instructions?: InstructionItem[];
+  /** @maxItems 20 */
+  attachedResourceIds?: string[];
+  /** @exclusiveMinimum 0 */
+  marksAllocated: number;
+  deadlineDate: CalendarDate;
+  /** @pattern ^\d{2}:\d{2}(:\d{2})?$ */
+  deadlineTime?: string;
+  allowResubmission?: boolean;
+  assignmentKind?: AssignmentKind;
+  /** @maxLength 200 */
+  topic?: string;
+  allowLate?: boolean;
+  /**
+     * @maxItems 10
+     * @items.maxLength 10
+     */
+  allowedFileTypes?: string[];
+  /** @maxItems 10 */
+  files?: StoredFileInput[];
+  publish?: CreateAssignmentInputPublish;
+  publishAt?: string;
+}
+
+export type AssignmentCreatedState = typeof AssignmentCreatedState[keyof typeof AssignmentCreatedState];
+
+
+export const AssignmentCreatedState = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+  archived: 'archived',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AssignmentCreated {
+  id: string;
+  classId: string;
+  subject: string;
+  title: string;
+  marksAllocated: number;
+  deadlineDate: CalendarDate;
+  createdAt: string;
+  state?: AssignmentCreatedState;
+  /** @nullable */
+  publishedAt?: string | null;
+}
+
+export interface UpdateAssignmentInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  subject?: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  title?: string;
+  /** @maxLength 5000 */
+  description?: string;
+  /** @exclusiveMinimum 0 */
+  marksAllocated?: number;
+  deadlineDate?: CalendarDate;
+  /**
+     * @nullable
+     * @pattern ^\d{2}:\d{2}(:\d{2})?$
+     */
+  deadlineTime?: string | null;
+  /** @maxItems 50 */
+  instructions?: InstructionItem[];
+  /** @maxItems 20 */
+  attachedResourceIds?: string[];
+  allowResubmission?: boolean;
+  assignmentKind?: AssignmentKind;
+  /**
+     * @maxLength 200
+     * @nullable
+     */
+  topic?: string | null;
+  allowLate?: boolean;
+  /**
+     * @maxItems 10
+     * @items.maxLength 10
+     */
+  allowedFileTypes?: string[];
+  /** @maxItems 10 */
+  files?: StoredFileInput[];
+}
+
+export interface AssignmentUpdated {
+  id: string;
+  subject: string;
+  title: string;
+  updatedAt: string;
+}
+
+export interface MarkSubmissionInput {
+  /** @minimum 0 */
+  marksObtained: number;
+  /** @maxLength 5000 */
+  feedback?: string;
+}
+
+export interface MarkSubmissionResponse {
+  success: boolean;
+  marksObtained: number;
+  markedAt: string;
+  status: string;
+}
+
+export type ResourceType = typeof ResourceType[keyof typeof ResourceType];
+
+
+export const ResourceType = {
+  pdf: 'pdf',
+  docx: 'docx',
+  pptx: 'pptx',
+  image: 'image',
+  video: 'video',
+  link: 'link',
+  spreadsheet: 'spreadsheet',
+  text: 'text',
+  archive: 'archive',
+  other: 'other',
+} as const;
+
+export type ResourceCategory = typeof ResourceCategory[keyof typeof ResourceCategory];
+
+
+export const ResourceCategory = {
+  class_notes: 'class_notes',
+  revision_notes: 'revision_notes',
+  worksheet: 'worksheet',
+  reading_material: 'reading_material',
+  presentation: 'presentation',
+  study_guide: 'study_guide',
+  past_paper: 'past_paper',
+  exam_resources: 'exam_resources',
+  textbook: 'textbook',
+  other: 'other',
+} as const;
+
+export interface ResourceSummary {
+  id: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  resourceType: ResourceType;
+  category: ResourceCategory;
+  /** @nullable */
+  subject: string | null;
+  /** @nullable */
+  academicYear: string | null;
+  /** @nullable */
+  term: string | null;
+  /** @nullable */
+  fileName: string | null;
+  /** @nullable */
+  fileSizeBytes: number | null;
+  files: StoredFile[];
+  /** @nullable */
+  publishedAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface ResourcesPage {
+  data: ResourceSummary[];
+  total: number;
+  hasMore: boolean;
+}
+
+export interface ResourceDetail {
+  id: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  resourceType: ResourceType;
+  category: ResourceCategory;
+  /** @nullable */
+  subject: string | null;
+  /** @nullable */
+  academicYear: string | null;
+  /** @nullable */
+  term: string | null;
+  learningObjectives: string[];
+  /** @nullable */
+  fileName: string | null;
+  /** @nullable */
+  fileSizeBytes: number | null;
+  files: StoredFile[];
+  /** @nullable */
+  publishedAt: string | null;
+  /** @nullable */
+  scheduledPublishAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  isVisibleToStudents: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateResourceInputPublish = typeof CreateResourceInputPublish[keyof typeof CreateResourceInputPublish];
+
+
+export const CreateResourceInputPublish = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+} as const;
+
+export interface CreateResourceInput {
+  classId: string;
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  title: string;
+  /** @maxLength 2000 */
+  description?: string;
+  resourceType: ResourceType;
+  category?: ResourceCategory;
+  /** @maxLength 100 */
+  subject?: string;
+  /**
+     * @maxItems 20
+     * @items.maxLength 500
+     */
+  learningObjectives?: string[];
+  lessonId?: string;
+  /** @nullable */
+  termId?: string | null;
+  publishAt?: string;
+  publish?: CreateResourceInputPublish;
+  /** @nullable */
+  expiresAt?: string | null;
+  isVisibleToStudents?: boolean;
+  /** @maxItems 200 */
+  restrictedToStudentIds?: string[];
+  /** @maxItems 10 */
+  files?: StoredFileInput[];
+}
+
+export interface ResourceCreated {
+  id: string;
+  title: string;
+  resourceType: ResourceType;
+  category: ResourceCategory;
+  isVisibleToStudents: boolean;
+  /** @nullable */
+  publishedAt: string | null;
+  files: StoredFile[];
+  createdAt: string;
+}
+
+export interface RecentResource {
+  id: string;
+  title: string;
+  resourceType: ResourceType;
+  /** @nullable */
+  publishedAt: string | null;
+}
+
+export interface RecentResources {
+  data: RecentResource[];
+}
+
+export interface BookmarkToggle {
+  bookmarked: boolean;
+}
+
+export interface BookmarkedResource {
+  id: string;
+  title: string;
+  resourceType: ResourceType;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  bookmarkedAt: string | null;
+}
+
+export interface BookmarksPage {
+  data: BookmarkedResource[];
+}
+
+export interface LessonItem {
+  id: string;
+  name: string;
+  /** @nullable */
+  topic: string | null;
+}
+
+export interface LessonChapter {
+  chapter: string;
+  lessons: LessonItem[];
+}
+
+export interface LessonUnit {
+  unit: string;
+  chapters: LessonChapter[];
+}
+
+export interface ClassLessons {
+  data: LessonUnit[];
+}
+
+export interface TimetableEntry {
+  id: string;
+  period: number;
+  subject: string;
+  teacher: string;
+  startTime: string;
+  endTime: string;
+  /** @nullable */
+  room: string | null;
+}
+
+export interface TodayTimetable {
+  data: TimetableEntry[];
+  date: CalendarDate;
+}
+
+export interface WeekDay {
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  dayOfWeek: number;
+  dayName: string;
+  classes: TimetableEntry[];
+}
+
+export interface WeekTimetable {
+  data: WeekDay[];
+  weekStart: CalendarDate;
+}
+
+export interface DateTimetable {
+  data: TimetableEntry[];
+  date: CalendarDate;
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  dayOfWeek: number;
+}
+
+export interface TimetableEntryInput {
+  classId: string;
+  /**
+     * @minimum 0
+     * @maximum 6
+     */
+  dayOfWeek: number;
+  /** @minimum 1 */
+  periodNumber: number;
+  /** @pattern ^\d{2}:\d{2}(:\d{2})?$ */
+  startTime: string;
+  /** @pattern ^\d{2}:\d{2}(:\d{2})?$ */
+  endTime: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  subject: string;
+  /**
+     * @minLength 1
+     * @maxLength 128
+     */
+  teacherUserId: string;
+  /** @maxLength 100 */
+  roomLocation?: string;
+}
+
+export interface TimetableEntrySaved {
+  id: string;
+  classId: string;
+  dayOfWeek: number;
+  periodNumber: number;
+  subject: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface SubjectOptions {
+  data: string[];
+}
+
+export type StoredFileKind = typeof StoredFileKind[keyof typeof StoredFileKind];
+
+
+export const StoredFileKind = {
+  pdf: 'pdf',
+  word: 'word',
+  powerpoint: 'powerpoint',
+  image: 'image',
+  spreadsheet: 'spreadsheet',
+  text: 'text',
+  archive: 'archive',
+} as const;
+
+export type PublishState = typeof PublishState[keyof typeof PublishState];
+
+
+export const PublishState = {
+  all: 'all',
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+  archived: 'archived',
+} as const;
+
+export interface FileDeclaration {
+  /**
+     * @minLength 1
+     * @maxLength 250
+     */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @maxLength 120 */
+  type: string;
+}
+
+export interface UploadTargetsInput {
+  classId: string;
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  files: FileDeclaration[];
+}
+
+export type UploadTargetMethod = typeof UploadTargetMethod[keyof typeof UploadTargetMethod];
+
+
+export const UploadTargetMethod = {
+  PUT: 'PUT',
+} as const;
+
+export type UploadTargetHeaders = {[key: string]: string};
+
+export interface UploadTarget {
+  id: string;
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+  extension: string;
+  kind: StoredFileKind;
+  method: UploadTargetMethod;
+  uploadUrl: string;
+  headers: UploadTargetHeaders;
+  expiresAt: string;
+}
+
+export interface UploadTargets {
+  data: UploadTarget[];
+  maxFileBytes: number;
+  allowedTypes: string[];
+}
+
+export interface SubmissionUploadTargetsInput {
+  /**
+     * @minItems 1
+     * @maxItems 10
+     */
+  files: FileDeclaration[];
+}
+
+export interface FileDownload {
+  url: string;
+  name: string;
+  size: number;
+  type: string;
+  expiresAt: string;
+}
+
+export type ManagedResourceState = typeof ManagedResourceState[keyof typeof ManagedResourceState];
+
+
+export const ManagedResourceState = {
+  draft: 'draft',
+  scheduled: 'scheduled',
+  published: 'published',
+  expired: 'expired',
+  archived: 'archived',
+} as const;
+
+export interface ManagedResource {
+  id: string;
+  classId: string;
+  /** @nullable */
+  className: string | null;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  /** @nullable */
+  subject: string | null;
+  category: ResourceCategory;
+  resourceType: ResourceType;
+  /** @nullable */
+  academicYear: string | null;
+  /** @nullable */
+  term: string | null;
+  /** @nullable */
+  uploadedBy: string | null;
+  learningObjectives: string[];
+  /** @nullable */
+  lessonId: string | null;
+  /** @nullable */
+  termId: string | null;
+  state: ManagedResourceState;
+  /** @nullable */
+  publishedAt: string | null;
+  /** @nullable */
+  scheduledPublishAt: string | null;
+  /** @nullable */
+  expiresAt: string | null;
+  isVisibleToStudents: boolean;
+  restrictedToStudentIds: string[];
+  files: StoredFile[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ManagedResourcesPage {
+  data: ManagedResource[];
+  total: number;
+  storageEnabled: boolean;
+}
+
+export interface UpdateResourceInput {
+  /**
+     * @minLength 2
+     * @maxLength 200
+     */
+  title?: string;
+  /** @maxLength 2000 */
+  description?: string;
+  /** @maxLength 100 */
+  subject?: string;
+  category?: ResourceCategory;
+  /**
+     * @maxItems 20
+     * @items.maxLength 500
+     */
+  learningObjectives?: string[];
+  /** @nullable */
+  lessonId?: string | null;
+  /** @nullable */
+  termId?: string | null;
+  /** @maxItems 10 */
+  files?: StoredFileInput[];
+}
+
+export type PublishResourceInputState = typeof PublishResourceInputState[keyof typeof PublishResourceInputState];
+
+
+export const PublishResourceInputState = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+} as const;
+
+export interface PublishResourceInput {
+  state: PublishResourceInputState;
+  publishAt?: string;
+  /** @nullable */
+  expiresAt?: string | null;
+  /** @maxItems 200 */
+  restrictedToStudentIds?: string[];
+}
+
+export type ManagedAssignmentState = typeof ManagedAssignmentState[keyof typeof ManagedAssignmentState];
+
+
+export const ManagedAssignmentState = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+  archived: 'archived',
+  cancelled: 'cancelled',
+} as const;
+
+export interface ManagedAssignment {
+  id: string;
+  classId: string;
+  subject: string;
+  title: string;
+  /** @nullable */
+  description: string | null;
+  instructions: InstructionItem[];
+  attachedResourceIds: string[];
+  assignmentKind: AssignmentKind;
+  /** @nullable */
+  topic?: string | null;
+  marksAllocated: number;
+  deadlineDate: CalendarDate;
+  /** @nullable */
+  deadlineTime: string | null;
+  allowResubmission: boolean;
+  allowLate: boolean;
+  allowedFileTypes: string[];
+  state: ManagedAssignmentState;
+  /** @nullable */
+  publishedAt: string | null;
+  /** @nullable */
+  archivedAt: string | null;
+  files: StoredFile[];
+  submissionCount: number;
+  gradedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ManagedAssignmentsPage {
+  data: ManagedAssignment[];
+  total: number;
+  storageEnabled: boolean;
+}
+
+export type PublishAssignmentInputState = typeof PublishAssignmentInputState[keyof typeof PublishAssignmentInputState];
+
+
+export const PublishAssignmentInputState = {
+  draft: 'draft',
+  published: 'published',
+  scheduled: 'scheduled',
+} as const;
+
+export interface PublishAssignmentInput {
+  state: PublishAssignmentInputState;
+  publishAt?: string;
+}
+
+export type AssignmentStateInputState = typeof AssignmentStateInputState[keyof typeof AssignmentStateInputState];
+
+
+export const AssignmentStateInputState = {
+  archived: 'archived',
+  cancelled: 'cancelled',
+} as const;
+
+export interface AssignmentStateInput {
+  state: AssignmentStateInputState;
+}
+
+export interface ExtendDeadlineInput {
+  deadlineDate: CalendarDate;
+  /** @pattern ^\d{2}:\d{2}(:\d{2})?$ */
+  deadlineTime?: string;
+}
+
+export interface SubmissionRosterRow {
+  /** @nullable */
+  id: string | null;
+  studentId: string;
+  /** @nullable */
+  studentName: string | null;
+  /** @nullable */
+  admissionNumber: string | null;
+  /** @nullable */
+  submittedAt: string | null;
+  /** @nullable */
+  submittedText: string | null;
+  submittedFiles: StoredFile[];
+  /** @nullable */
+  marksObtained: number | null;
+  /** @nullable */
+  feedback: string | null;
+  /** @nullable */
+  markedAt: string | null;
+  status: AssignmentStatus;
+  isLate: boolean;
+}
+
+export interface ManagedSubmissionsPage {
+  data: SubmissionRosterRow[];
+  total: number;
+  submissionCount: number;
+  gradedCount: number;
+  notSubmittedCount: number;
+}
+
 /**
  * Error
  */
@@ -915,5 +1927,210 @@ pageSize?: number;
 export type GetAttendanceRegisterParams = {
 date: CalendarDate;
 classId: string;
+};
+
+export type ListMyAssessmentsParams = {
+termId?: string;
+/**
+ * @maxLength 100
+ */
+subject?: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListPublishedResultsParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+sortBy?: ListPublishedResultsSortBy;
+};
+
+export type ListPublishedResultsSortBy = typeof ListPublishedResultsSortBy[keyof typeof ListPublishedResultsSortBy];
+
+
+export const ListPublishedResultsSortBy = {
+  recent: 'recent',
+  subject: 'subject',
+} as const;
+
+export type ListAssignmentsParams = {
+status?: AssignmentStatus;
+/**
+ * @maxLength 100
+ */
+subject?: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListAssignmentSubmissionsParams = {
+filter?: ListAssignmentSubmissionsFilter;
+/**
+ * @maxLength 100
+ */
+search?: string;
+sort?: ListAssignmentSubmissionsSort;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListAssignmentSubmissionsFilter = typeof ListAssignmentSubmissionsFilter[keyof typeof ListAssignmentSubmissionsFilter];
+
+
+export const ListAssignmentSubmissionsFilter = {
+  all: 'all',
+  submitted: 'submitted',
+  graded: 'graded',
+  pending: 'pending',
+  late: 'late',
+} as const;
+
+export type ListAssignmentSubmissionsSort = typeof ListAssignmentSubmissionsSort[keyof typeof ListAssignmentSubmissionsSort];
+
+
+export const ListAssignmentSubmissionsSort = {
+  name: 'name',
+  submitted: 'submitted',
+  marks: 'marks',
+} as const;
+
+export type ListLearningResourcesParams = {
+classId?: string;
+/**
+ * @maxLength 100
+ */
+subject?: string;
+category?: ResourceCategory;
+resourceType?: ResourceType;
+sort?: ListLearningResourcesSort;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListLearningResourcesSort = typeof ListLearningResourcesSort[keyof typeof ListLearningResourcesSort];
+
+
+export const ListLearningResourcesSort = {
+  newest: 'newest',
+  oldest: 'oldest',
+  title: 'title',
+} as const;
+
+export type ListRecentResourcesParams = {
+/**
+ * @minimum 1
+ * @maximum 50
+ */
+limit?: number;
+};
+
+export type ListBookmarkedResourcesParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListTeachableSubjectsParams = {
+classId: string;
+};
+
+export type ListManagedLearningResourcesParams = {
+classId?: string;
+state?: PublishState;
+category?: ResourceCategory;
+/**
+ * @maxLength 100
+ */
+subject?: string;
+termId?: string;
+/**
+ * @maxLength 100
+ */
+search?: string;
+uploadedAfter?: string;
+uploadedBefore?: string;
+sort?: ListManagedLearningResourcesSort;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type ListManagedLearningResourcesSort = typeof ListManagedLearningResourcesSort[keyof typeof ListManagedLearningResourcesSort];
+
+
+export const ListManagedLearningResourcesSort = {
+  newest: 'newest',
+  oldest: 'oldest',
+  title: 'title',
+} as const;
+
+export type ListManagedAssignmentsParams = {
+classId: string;
+state?: PublishState;
+/**
+ * @maxLength 100
+ */
+subject?: string;
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+/**
+ * @minimum 0
+ */
+offset?: number;
+};
+
+export type GetTimetableForDateParams = {
+date?: CalendarDate;
+classId?: string;
 };
 

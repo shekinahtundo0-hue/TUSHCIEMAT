@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  AlertTriangle, Bell, BookOpen, CalendarDays, Check, ChevronDown, ChevronRight, CircleHelp, ClipboardCheck, Copy,
+  AlertTriangle, Bell, BookOpen, CalendarCheck, CalendarDays, Check, ChevronDown, ChevronRight, CircleHelp, ClipboardCheck, Copy,
   LayoutDashboard, LoaderCircle, LogOut, Megaphone, Menu, Plus, RefreshCw, School as SchoolIcon, Search, Settings, ShieldCheck,
-  UserPlus, UserRound, Users, X, type LucideIcon,
+  FolderOpen, GraduationCap,
+  TrendingUp, UserPlus, UserRound, Users, X, type LucideIcon,
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useListNotifications, type SchoolRole } from '@workspace/api-client-react';
@@ -44,10 +45,30 @@ const NAV: Record<ShellKey, NavItem[]> = {
     { href: '/teach', label: 'My classes', icon: BookOpen, roles: PORTALS.teach.roles },
     { href: '/teach/attendance', label: 'Attendance', icon: ClipboardCheck, roles: ['teacher'] },
     { href: '/teach/students', label: 'Learners', icon: Users, roles: ['teacher'] },
+    { href: '/teach/materials', label: 'Materials', icon: FolderOpen, roles: ['teacher'] },
+    { href: '/teach/materials/new', label: 'Upload notes', icon: Plus, roles: ['teacher'] },
+    { href: '/teach/assignments', label: 'Assignments', icon: ClipboardCheck, roles: ['teacher'] },
+    { href: '/teach/submissions', label: 'Marking', icon: GraduationCap, roles: ['teacher'] },
     { href: '/teach/announcements', label: 'Announcements', icon: Megaphone },
   ],
-  family: [{ href: '/family', label: 'My children', icon: UserRound }, { href: '/family/announcements', label: 'Announcements', icon: Megaphone }],
-  learn: [{ href: '/learn', label: 'My record', icon: BookOpen }, { href: '/learn/announcements', label: 'Announcements', icon: Megaphone }],
+  family: [
+    { href: '/family', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/family/academic', label: 'Academics', icon: TrendingUp },
+    { href: '/family/attendance', label: 'Attendance', icon: CalendarCheck },
+    { href: '/family/assignments', label: 'Assignments', icon: ClipboardCheck },
+    { href: '/family/communications', label: 'Communications', icon: Megaphone },
+    { href: '/family/children', label: 'My children', icon: Users },
+    { href: '/family/announcements', label: 'Announcements', icon: Megaphone },
+  ],
+  learn: [
+    { href: '/learn', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/learn/learning', label: 'My learning', icon: BookOpen },
+    { href: '/learn/assignments', label: 'Assignments', icon: ClipboardCheck },
+    { href: '/learn/results', label: 'Results', icon: TrendingUp },
+    { href: '/learn/timetable', label: 'Timetable', icon: CalendarDays },
+    { href: '/learn/announcements', label: 'Announcements', icon: Megaphone },
+    { href: '/learn/profile', label: 'Profile', icon: UserRound },
+  ],
   platform: [{ href: '/platform', label: 'Schools', icon: ShieldCheck }],
 };
 

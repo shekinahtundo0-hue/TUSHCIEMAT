@@ -92,7 +92,8 @@
     .data-table td {
       @apply block border-0 py-3 px-4;
       @apply before:content-[attr(data-label)] before:font-semibold before:block before:mb-1 before:text-xs before:text-muted-foreground;
-      @apply padding-left: 50%;
+      position: relative;
+      padding-left: 50%;
     }
 
     .data-table td:before {

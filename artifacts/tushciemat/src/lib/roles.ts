@@ -33,6 +33,7 @@ export const DELEGABLE_CAPABILITIES: readonly { key: SchoolCapability; label: st
   { key: 'requests.review', label: 'Join requests', description: 'Approve or reject requests to join the school' },
   { key: 'settings.manage', label: 'School settings', description: 'Edit the school profile and preferences' },
   { key: 'announcements.manage', label: 'Announcements', description: 'Publish announcements to the school' },
+  { key: 'classroom.manage', label: 'Classroom', description: 'Manage learning resources, assignments and timetables' },
 ];
 
 // Display-only labels for capabilities that exist in the API enum but are not delegable here
@@ -42,7 +43,10 @@ export const CAPABILITY_LABELS: Record<SchoolCapability, string> = Object.fromEn
     ['records.delete', 'Permanent deletion'],
     ['assessments.manage', 'Assessments'],
     ['results.publish', 'Publish results'],
-    ['resources.manage', 'Learning materials']],
+    ['resources.manage', 'Learning materials'],
+    ['staff.manage', 'Staff records'],
+    ['workload.manage', 'Staff workload'],
+    ['communications.manage', 'Communications']],
 ) as Record<SchoolCapability, string>;
 
 export type PortalKey = 'admin' | 'teach' | 'family' | 'learn';

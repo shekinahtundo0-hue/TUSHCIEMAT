@@ -10,7 +10,14 @@ export interface AppConfig {
   trustProxy: number | false;
   timezone: string;
   invitationTtlDays: number;
+  storage: StorageConfig | null;
 }
+
+export type StorageConfig = {
+  url: string;
+  serviceKey: string;
+  bucket: string;
+};
 
 export class ConfigError extends Error {
   constructor(problems: string[]) {
@@ -95,6 +102,24 @@ export function loadConfig(env: Env = process.env): AppConfig {
     problems.push(`APP_TIMEZONE "${timezone}" is not a valid IANA timezone`);
   }
 
+  const storageUrl = optional(env.SUPABASE_URL);
+  const storageKey = optional(env.SUPABASE_SERVICE_ROLE_KEY);
+  const storageBucket = optional(env.SUPABASE_STORAGE_BUCKET) ?? "classroom-files";
+  let storage: StorageConfig | null = null;
+  if (storageUrl || storageKey) {
+    if (!storageUrl) problems.push("SUPABASE_URL is required once file storage is enabled");
+    if (!storageKey) problems.push("SUPABASE_SERVICE_ROLE_KEY is required once file storage is enabled");
+    if (storageUrl && !/^https:\/\/[a-z0-9.-]+\/?$/i.test(storageUrl)) {
+      problems.push("SUPABASE_URL must be an https project URL (e.g. https://xyzcompany.supabase.co)");
+    }
+    if (!/^[a-z0-9][a-z0-9._-]{0,99}$/.test(storageBucket)) {
+      problems.push("SUPABASE_STORAGE_BUCKET must be a lowercase storage bucket name");
+    }
+    if (problems.length === 0) {
+      storage = { url: storageUrl as string, serviceKey: storageKey as string, bucket: storageBucket };
+    }
+  }
+
   const config: AppConfig = {
     nodeEnv,
     isProduction,
@@ -107,6 +132,7 @@ export function loadConfig(env: Env = process.env): AppConfig {
     trustProxy,
     timezone,
     invitationTtlDays: integer("INVITATION_TTL_DAYS", 7, 1, 30),
+    storage,
   };
 
   if (problems.length > 0) throw new ConfigError(problems);

@@ -23,6 +23,10 @@ tags:
   - name: members
   - name: portal
   - name: platform
+  - name: results
+  - name: assignments
+  - name: learning
+  - name: timetable
 paths:
   /healthz:
     get:
@@ -722,6 +726,834 @@ paths:
                 type: array
                 items: { $ref: "#/components/schemas/PlatformSchool" }
         "403": { $ref: "#/components/responses/Error" }
+  /results/my-assessments:
+    get:
+      operationId: listMyAssessments
+      tags: [results]
+      summary: Assessments for the signed-in learner's class
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: termId, schema: { type: string, format: uuid } }
+        - { in: query, name: subject, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Assessments page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MyAssessmentsPage" }
+        "400": { $ref: "#/components/responses/Error" }
+  /results/published:
+    get:
+      operationId: listPublishedResults
+      tags: [results]
+      summary: Published assessment marks for the signed-in learner
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+        - { in: query, name: sortBy, schema: { type: string, enum: [recent, subject], default: recent } }
+      responses:
+        "200":
+          description: Published marks page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublishedMarksPage" }
+        "400": { $ref: "#/components/responses/Error" }
+  /results/by-subject/{subject}:
+    get:
+      operationId: getSubjectResults
+      tags: [results]
+      summary: Published mark history for one subject
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: subject, required: true, schema: { type: string, minLength: 1, maxLength: 100 } }
+      responses:
+        "200":
+          description: Subject marks
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubjectResults" }
+        "400": { $ref: "#/components/responses/Error" }
+  /results/term/{termId}:
+    get:
+      operationId: getTermResults
+      tags: [results]
+      summary: Published term summary for the signed-in learner
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: termId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Term summary
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TermResults" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /results/assessment/{assessmentId}:
+    get:
+      operationId: getAssessmentResult
+      tags: [results]
+      summary: Assessment details with the learner's mark when published
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assessmentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Assessment result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssessmentResult" }
+        "404": { $ref: "#/components/responses/Error" }
+  /results/publish:
+    post:
+      operationId: publishResults
+      tags: [results]
+      summary: Set the publication status of term results (staff)
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PublishResultsInput" }
+      responses:
+        "200":
+          description: Publication status saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PublishResultsReceipt" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /results/parent/child/{studentId}:
+    get:
+      operationId: listChildResults
+      tags: [results]
+      summary: Published results for a verified linked child (parents)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: studentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Child's published marks
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChildResults" }
+        "403": { $ref: "#/components/responses/Error" }
+  /assignments:
+    get:
+      operationId: listAssignments
+      tags: [assignments]
+      summary: Assignments for the signed-in learner's class
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: status, schema: { $ref: "#/components/schemas/AssignmentStatus" } }
+        - { in: query, name: subject, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Assignments page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssignmentsPage" }
+        "400": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: createAssignment
+      tags: [assignments]
+      summary: Create an assignment (staff and teachers)
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateAssignmentInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssignmentCreated" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}:
+    get:
+      operationId: getAssignmentDetail
+      tags: [assignments]
+      summary: Assignment with the learner's own submission
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Assignment detail
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssignmentDetail" }
+        "404": { $ref: "#/components/responses/Error" }
+    put:
+      operationId: updateAssignment
+      tags: [assignments]
+      summary: Update an assignment before any submissions (staff and teachers)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateAssignmentInput" }
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssignmentUpdated" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submit:
+    post:
+      operationId: submitAssignment
+      tags: [assignments]
+      summary: Submit (or resubmit when allowed) before the deadline
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitAssignmentInput" }
+      responses:
+        "201":
+          description: Submitted
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubmissionReceipt" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+    put:
+      operationId: updateAssignmentSubmission
+      tags: [assignments]
+      summary: Save submission edits before the deadline
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmitAssignmentInput" }
+      responses:
+        "200":
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UpdateSubmissionResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submission:
+    get:
+      operationId: getAssignmentSubmission
+      tags: [assignments]
+      summary: The learner's own submission with marks and feedback
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Submission
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssignmentSubmission" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submissions:
+    get:
+      operationId: listAssignmentSubmissions
+      tags: [assignments]
+      summary: Full class roster with submissions, for marking (staff and teachers)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: filter, schema: { type: string, enum: [all, submitted, graded, pending, late] } }
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: sort, schema: { type: string, enum: [name, submitted, marks] } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Submission roster
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedSubmissionsPage" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submissions/{submissionId}/mark:
+    post:
+      operationId: markAssignmentSubmission
+      tags: [assignments]
+      summary: Grade a submission (staff and teachers)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: submissionId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MarkSubmissionInput" }
+      responses:
+        "200":
+          description: Graded
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MarkSubmissionResponse" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/resources:
+    get:
+      operationId: listLearningResources
+      tags: [learning]
+      summary: Visible learning resources for a class
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: classId, schema: { type: string, format: uuid } }
+        - { in: query, name: subject, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: category, schema: { $ref: "#/components/schemas/ResourceCategory" } }
+        - { in: query, name: resourceType, schema: { $ref: "#/components/schemas/ResourceType" } }
+        - { in: query, name: sort, schema: { type: string, enum: [newest, oldest, title], default: newest } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Resources page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourcesPage" }
+        "400": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: createLearningResource
+      tags: [learning]
+      summary: Create a learning resource (staff and teachers)
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateResourceInput" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourceCreated" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/resources/recent:
+    get:
+      operationId: listRecentResources
+      tags: [learning]
+      summary: Recently published resources for the learner's class
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 10 } }
+      responses:
+        "200":
+          description: Recent resources
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecentResources" }
+  /learning/resources/{resourceId}:
+    get:
+      operationId: getLearningResource
+      tags: [learning]
+      summary: Resource details and file metadata
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Resource
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ResourceDetail" }
+        "404": { $ref: "#/components/responses/Error" }
+    patch:
+      operationId: updateLearningResource
+      tags: [learning]
+      summary: Edit a resource and replace its files (staff and assigned teachers)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateResourceInput" }
+      responses:
+        "200":
+          description: Updated resource
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedResource" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+    delete:
+      operationId: deleteLearningResource
+      tags: [learning]
+      summary: Archive a resource so learners can no longer open it
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "204": { description: Archived }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/resources/{resourceId}/download:
+    get:
+      operationId: downloadLearningResource
+      tags: [learning]
+      summary: Download URL for a resource's main file; logs learner access
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Signed download link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileDownload" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /learning/resources/{resourceId}/bookmark:
+    post:
+      operationId: toggleBookmark
+      tags: [learning]
+      summary: Toggle the bookmark on a resource's lesson
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Bookmark state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BookmarkToggle" }
+        "400": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/bookmarks:
+    get:
+      operationId: listBookmarkedResources
+      tags: [learning]
+      summary: Resources on the learner's bookmarked lessons
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Bookmarked resources
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BookmarksPage" }
+        "400": { $ref: "#/components/responses/Error" }
+  /learning/lessons/{classId}:
+    get:
+      operationId: listClassLessons
+      tags: [learning]
+      summary: Lessons for a class grouped by unit and chapter
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: classId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Lesson tree
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClassLessons" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/upload-targets:
+    post:
+      operationId: createResourceUploadTargets
+      tags: [learning]
+      summary: Short-lived storage upload URLs for learning material files
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadTargetsInput" }
+      responses:
+        "201":
+          description: Upload targets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadTargets" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /learning/subject-options:
+    get:
+      operationId: listTeachableSubjects
+      tags: [learning]
+      summary: Real subject records the caller may publish class materials or assignments to
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: classId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Subject options
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubjectOptions" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /learning/resources/management:
+    get:
+      operationId: listManagedLearningResources
+      tags: [learning]
+      summary: Every resource a teacher or administrator manages, including drafts
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: classId, schema: { type: string, format: uuid } }
+        - { in: query, name: state, schema: { $ref: "#/components/schemas/PublishState" } }
+        - { in: query, name: category, schema: { $ref: "#/components/schemas/ResourceCategory" } }
+        - { in: query, name: subject, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: termId, schema: { type: string, format: uuid } }
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: uploadedAfter, schema: { type: string, format: date } }
+        - { in: query, name: uploadedBefore, schema: { type: string, format: date } }
+        - { in: query, name: sort, schema: { type: string, enum: [newest, oldest, title], default: newest } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Managed resources page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedResourcesPage" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /learning/resources/{resourceId}/publish:
+    post:
+      operationId: publishLearningResource
+      tags: [learning]
+      summary: Publish now, schedule for later, or unpublish a resource
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PublishResourceInput" }
+      responses:
+        "200":
+          description: Resource publication state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedResource" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /learning/resources/{resourceId}/files/{fileId}/download:
+    get:
+      operationId: downloadResourceFile
+      tags: [learning]
+      summary: Authorized download link for one resource file
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: fileId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Signed download link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileDownload" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /learning/resources/{resourceId}/files/{fileId}/preview:
+    get:
+      operationId: previewResourceFile
+      tags: [learning]
+      summary: Inline preview link for one resource file
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: resourceId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: fileId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Signed preview link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileDownload" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /assignments/upload-targets:
+    post:
+      operationId: createAssignmentUploadTargets
+      tags: [assignments]
+      summary: Short-lived storage upload URLs for assignment files
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UploadTargetsInput" }
+      responses:
+        "201":
+          description: Upload targets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadTargets" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /assignments/management:
+    get:
+      operationId: listManagedAssignments
+      tags: [assignments]
+      summary: Assignments a teacher or administrator manages, with submission counts
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: classId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: state, schema: { $ref: "#/components/schemas/PublishState" } }
+        - { in: query, name: subject, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+        - { in: query, name: offset, schema: { type: integer, minimum: 0, default: 0 } }
+      responses:
+        "200":
+          description: Managed assignments page
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedAssignmentsPage" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/files/{fileId}/download:
+    get:
+      operationId: downloadAssignmentFile
+      tags: [assignments]
+      summary: Download one supporting file attached to an assignment
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: fileId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Signed download link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileDownload" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/publish:
+    post:
+      operationId: publishAssignment
+      tags: [assignments]
+      summary: Publish now, schedule for later, or move an assignment back to draft
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PublishAssignmentInput" }
+      responses:
+        "200":
+          description: Assignment lifecycle state
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedAssignment" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/duplicate:
+    post:
+      operationId: duplicateAssignment
+      tags: [assignments]
+      summary: Copy an assignment into a new draft
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "201":
+          description: Draft copy
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedAssignment" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/extend-deadline:
+    post:
+      operationId: extendAssignmentDeadline
+      tags: [assignments]
+      summary: Give the class more time on a published assignment
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExtendDeadlineInput" }
+      responses:
+        "200":
+          description: Extended assignment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedAssignment" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/state:
+    post:
+      operationId: setAssignmentState
+      tags: [assignments]
+      summary: Archive or cancel an assignment
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AssignmentStateInput" }
+      responses:
+        "200":
+          description: Updated assignment
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ManagedAssignment" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submission/upload-targets:
+    post:
+      operationId: createSubmissionUploadTargets
+      tags: [assignments]
+      summary: Short-lived storage upload URLs for a learner's own submission files
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubmissionUploadTargetsInput" }
+      responses:
+        "201":
+          description: Upload targets
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UploadTargets" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /assignments/{assignmentId}/submissions/{submissionId}/files/{fileId}/download:
+    get:
+      operationId: downloadSubmissionFile
+      tags: [assignments]
+      summary: Download one file a learner submitted for marking
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: path, name: assignmentId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: submissionId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: fileId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Signed download link
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/FileDownload" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
+        "409": { $ref: "#/components/responses/Error" }
+        "503": { $ref: "#/components/responses/Error" }
+  /timetable/today:
+    get:
+      operationId: getTodayTimetable
+      tags: [timetable]
+      summary: Today's schedule for the learner's class
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Today's periods
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TodayTimetable" }
+        "400": { $ref: "#/components/responses/Error" }
+  /timetable/week:
+    get:
+      operationId: getTimetableForWeek
+      tags: [timetable]
+      summary: Full weekly timetable for the learner's class
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      responses:
+        "200":
+          description: Week grouped by day
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WeekTimetable" }
+        "400": { $ref: "#/components/responses/Error" }
+  /timetable:
+    get:
+      operationId: getTimetableForDate
+      tags: [timetable]
+      summary: Timetable for a date (defaults to today)
+      parameters:
+        - { $ref: "#/components/parameters/SchoolId" }
+        - { in: query, name: date, schema: { $ref: "#/components/schemas/CalendarDate" } }
+        - { in: query, name: classId, schema: { type: string, format: uuid } }
+      responses:
+        "200":
+          description: Day's periods
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DateTimetable" }
+        "400": { $ref: "#/components/responses/Error" }
+    post:
+      operationId: upsertTimetableEntry
+      tags: [timetable]
+      summary: Create or update a timetable period (staff and teachers)
+      parameters: [{ $ref: "#/components/parameters/SchoolId" }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TimetableEntryInput" }
+      responses:
+        "200":
+          description: Updated existing period
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TimetableEntrySaved" }
+        "201":
+          description: Created period
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TimetableEntrySaved" }
+        "400": { $ref: "#/components/responses/Error" }
+        "403": { $ref: "#/components/responses/Error" }
+        "404": { $ref: "#/components/responses/Error" }
 components:
   securitySchemes:
     FirebaseBearer:
@@ -768,7 +1600,7 @@ components:
       enum: [owner, school_admin, principal, academic_admin, bursar, teacher, parent, student, tutor]
     SchoolCapability:
       type: string
-      enum: [students.manage, academics.manage, attendance.manage, people.manage, requests.review, settings.manage, announcements.manage, assessments.manage, results.publish, resources.manage, records.delete]
+      enum: [students.manage, academics.manage, attendance.manage, people.manage, requests.review, settings.manage, announcements.manage, assessments.manage, results.publish, resources.manage, staff.manage, workload.manage, communications.manage, classroom.manage, records.delete]
     MemberCapabilitiesInput:
       type: object
       additionalProperties: false
@@ -776,7 +1608,7 @@ components:
       properties:
         capabilities:
           type: array
-          maxItems: 11
+          maxItems: 15
           uniqueItems: true
           items: { $ref: "#/components/schemas/SchoolCapability" }
     PlatformRole:
@@ -1275,3 +2107,873 @@ components:
         contactPhone: { type: ["string", "null"], maxLength: 30, pattern: "^\\+?[0-9 ()-]{7,30}$" }
         website: { type: ["string", "null"], maxLength: 2048, pattern: "^https?://" }
         discoverable: { type: boolean }
+    AssessmentSummary:
+      type: object
+      required: [id, subject, maxMarks, termName]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        maxMarks: { type: number }
+        termName: { type: string }
+    MyAssessmentsPage:
+      type: object
+      required: [data, total, hasMore]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/AssessmentSummary" }
+        total: { type: integer }
+        hasMore: { type: boolean }
+    PublishedMark:
+      type: object
+      required: [id, assessmentId, subject, maxMarks, marksObtained, feedback, markedAt]
+      properties:
+        id: { type: string, format: uuid }
+        assessmentId: { type: string, format: uuid }
+        subject: { type: string }
+        maxMarks: { type: number }
+        marksObtained: { type: ["number", "null"] }
+        feedback: { type: ["string", "null"] }
+        markedAt: { type: ["string", "null"], format: date-time }
+    PublishedMarksPage:
+      type: object
+      required: [data, total, hasMore]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/PublishedMark" }
+        total: { type: integer }
+        hasMore: { type: boolean }
+    SubjectMark:
+      type: object
+      required: [id, assessmentId, marksObtained, feedback, markedAt]
+      properties:
+        id: { type: string, format: uuid }
+        assessmentId: { type: string, format: uuid }
+        marksObtained: { type: ["number", "null"] }
+        feedback: { type: ["string", "null"] }
+        markedAt: { type: ["string", "null"], format: date-time }
+    SubjectResults:
+      type: object
+      required: [data, subject, averageTrend]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/SubjectMark" }
+        subject: { type: string }
+        averageTrend: { type: ["number", "null"] }
+    SubjectResultRow:
+      type: object
+      required: [subject, totalMarks, averagePercentage, grade, position]
+      properties:
+        subject: { type: string }
+        totalMarks: { type: ["number", "null"] }
+        averagePercentage: { type: ["number", "null"] }
+        grade: { type: ["string", "null"] }
+        position: { type: ["integer", "null"] }
+    TermResults:
+      type: object
+      required: [termId, termName, termData, subjectResults, overallAverage, classPosition]
+      properties:
+        termId: { type: string, format: uuid }
+        termName: { type: string }
+        termData:
+          type: object
+          required: [startsOn, endsOn]
+          properties:
+            startsOn: { $ref: "#/components/schemas/CalendarDate" }
+            endsOn: { $ref: "#/components/schemas/CalendarDate" }
+        subjectResults:
+          type: array
+          items: { $ref: "#/components/schemas/SubjectResultRow" }
+        overallAverage: { type: ["number", "null"] }
+        classPosition: { type: ["integer", "null"] }
+    AssessmentResult:
+      type: object
+      required: [id, subject, maxMarks, assessmentTypeId, term, class, studentMark, isPublished]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        maxMarks: { type: number }
+        assessmentTypeId: { type: string, format: uuid }
+        term:
+          type: object
+          required: [id, name, startsOn, endsOn]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            startsOn: { $ref: "#/components/schemas/CalendarDate" }
+            endsOn: { $ref: "#/components/schemas/CalendarDate" }
+        class:
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+        studentMark:
+          oneOf:
+            - type: object
+              required: [marksObtained, feedback, submissionStatus, markedAt]
+              properties:
+                marksObtained: { type: ["number", "null"] }
+                feedback: { type: ["string", "null"] }
+                submissionStatus: { type: string }
+                markedAt: { type: ["string", "null"], format: date-time }
+            - type: "null"
+        isPublished: { type: boolean }
+    PublishResultsInput:
+      type: object
+      additionalProperties: false
+      required: [termId, status]
+      properties:
+        termId: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        status: { type: string, enum: [draft, pending_review, approved, published] }
+    PublishResultsReceipt:
+      type: object
+      required: [success, status]
+      properties:
+        success: { type: boolean }
+        status: { type: string }
+    ChildMark:
+      type: object
+      required: [id, subject, marksObtained, maxMarks, feedback, markedAt]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        marksObtained: { type: ["number", "null"] }
+        maxMarks: { type: number }
+        feedback: { type: ["string", "null"] }
+        markedAt: { type: ["string", "null"], format: date-time }
+    ChildResults:
+      type: object
+      required: [data, studentId]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/ChildMark" }
+        studentId: { type: string, format: uuid }
+    AssignmentStatus:
+      type: string
+      enum: [not_started, in_progress, submitted, graded, overdue]
+    InstructionItem:
+      type: object
+      required: [type, content]
+      properties:
+        type: { type: string, maxLength: 40 }
+        content: { type: string, maxLength: 2000 }
+    AssignmentSummary:
+      type: object
+      required: [id, classId, subject, title, description, deadlineDate, deadlineTime, marksAllocated, assignmentKind, allowLate, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        subject: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: ["string", "null"] }
+        marksAllocated: { type: number }
+        assignmentKind: { $ref: "#/components/schemas/AssignmentKind" }
+        allowLate: { type: boolean }
+        status: { $ref: "#/components/schemas/AssignmentStatus" }
+        createdAt: { type: string, format: date-time }
+    AssignmentsPage:
+      type: object
+      required: [data, total, hasMore]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/AssignmentSummary" }
+        total: { type: integer }
+        hasMore: { type: boolean }
+    AssignmentSubmission:
+      type: object
+      required: [id, submissionText, submittedFiles, submittedAt, marksObtained, feedback, markedAt, status, isLate]
+      properties:
+        id: { type: string, format: uuid }
+        submissionText: { type: ["string", "null"] }
+        submittedFiles:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        submittedAt: { type: ["string", "null"], format: date-time }
+        marksObtained: { type: ["number", "null"] }
+        feedback: { type: ["string", "null"] }
+        markedAt: { type: ["string", "null"], format: date-time }
+        status: { $ref: "#/components/schemas/AssignmentStatus" }
+        isLate: { type: boolean }
+    AssignmentDetail:
+      type: object
+      required: [id, subject, title, description, instructions, attachedResourceIds, assignmentKind, topic, marksAllocated, deadlineDate, deadlineTime, allowResubmission, allowLate, allowedFileTypes, state, createdAt, submission, status, files]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        instructions:
+          type: array
+          items: { $ref: "#/components/schemas/InstructionItem" }
+        attachedResourceIds:
+          type: array
+          items: { type: string }
+        assignmentKind: { $ref: "#/components/schemas/AssignmentKind" }
+        topic: { type: ["string", "null"] }
+        marksAllocated: { type: number }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: ["string", "null"] }
+        allowResubmission: { type: boolean }
+        allowLate: { type: boolean }
+        allowedFileTypes:
+          type: array
+          items: { type: string }
+        state: { type: string, enum: [draft, published, scheduled, archived, cancelled] }
+        createdAt: { type: string, format: date-time }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        submission:
+          oneOf:
+            - { $ref: "#/components/schemas/AssignmentSubmission" }
+            - type: "null"
+        status: { $ref: "#/components/schemas/AssignmentStatus" }
+    SubmitAssignmentInput:
+      type: object
+      additionalProperties: false
+      properties:
+        submissionText: { type: string, maxLength: 20000 }
+        files:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/StoredFileInput" }
+    SubmissionReceipt:
+      type: object
+      required: [success, id, submittedAt, status, isLate]
+      properties:
+        success: { type: boolean }
+        id: { type: string, format: uuid }
+        submittedAt: { type: string, format: date-time }
+        status: { type: string }
+        isLate: { type: boolean }
+    UpdateSubmissionResponse:
+      type: object
+      required: [success, status]
+      properties:
+        success: { type: boolean }
+        status: { type: string }
+    CreateAssignmentInput:
+      type: object
+      additionalProperties: false
+      required: [classId, subject, title, marksAllocated, deadlineDate]
+      properties:
+        classId: { type: string, format: uuid }
+        subject: { type: string, minLength: 1, maxLength: 100 }
+        title: { type: string, minLength: 2, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+        instructions:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/InstructionItem" }
+        attachedResourceIds:
+          type: array
+          maxItems: 20
+          items: { type: string, format: uuid }
+        marksAllocated: { type: number, exclusiveMinimum: 0 }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: string, pattern: "^\\d{2}:\\d{2}(:\\d{2})?$" }
+        allowResubmission: { type: boolean }
+        assignmentKind: { $ref: "#/components/schemas/AssignmentKind" }
+        topic: { type: string, maxLength: 200 }
+        allowLate: { type: boolean }
+        allowedFileTypes:
+          type: array
+          maxItems: 10
+          items: { type: string, maxLength: 10 }
+        files:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/StoredFileInput" }
+        publish: { type: string, enum: [draft, published, scheduled] }
+        publishAt: { type: string, format: date-time }
+    AssignmentCreated:
+      type: object
+      required: [id, classId, subject, title, marksAllocated, deadlineDate, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        subject: { type: string }
+        title: { type: string }
+        marksAllocated: { type: number }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        createdAt: { type: string, format: date-time }
+        state: { type: string, enum: [draft, published, scheduled, archived, cancelled] }
+        publishedAt: { type: ["string", "null"], format: date-time }
+    UpdateAssignmentInput:
+      type: object
+      additionalProperties: false
+      properties:
+        subject: { type: string, minLength: 1, maxLength: 100 }
+        title: { type: string, minLength: 2, maxLength: 200 }
+        description: { type: string, maxLength: 5000 }
+        marksAllocated: { type: number, exclusiveMinimum: 0 }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: ["string", "null"], pattern: "^\\d{2}:\\d{2}(:\\d{2})?$" }
+        instructions:
+          type: array
+          maxItems: 50
+          items: { $ref: "#/components/schemas/InstructionItem" }
+        attachedResourceIds:
+          type: array
+          maxItems: 20
+          items: { type: string, format: uuid }
+        allowResubmission: { type: boolean }
+        assignmentKind: { $ref: "#/components/schemas/AssignmentKind" }
+        topic: { type: ["string", "null"], maxLength: 200 }
+        allowLate: { type: boolean }
+        allowedFileTypes:
+          type: array
+          maxItems: 10
+          items: { type: string, maxLength: 10 }
+        files:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/StoredFileInput" }
+    AssignmentUpdated:
+      type: object
+      required: [id, subject, title, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        subject: { type: string }
+        title: { type: string }
+        updatedAt: { type: string, format: date-time }
+    MarkSubmissionInput:
+      type: object
+      additionalProperties: false
+      required: [marksObtained]
+      properties:
+        marksObtained: { type: number, minimum: 0 }
+        feedback: { type: string, maxLength: 5000 }
+    MarkSubmissionResponse:
+      type: object
+      required: [success, marksObtained, markedAt, status]
+      properties:
+        success: { type: boolean }
+        marksObtained: { type: number }
+        markedAt: { type: string, format: date-time }
+        status: { type: string }
+    ResourceType:
+      type: string
+      enum: [pdf, docx, pptx, image, video, link, spreadsheet, text, archive, other]
+    ResourceSummary:
+      type: object
+      required: [id, title, description, resourceType, category, subject, academicYear, term, fileName, fileSizeBytes, files, publishedAt, expiresAt, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        subject: { type: ["string", "null"] }
+        academicYear: { type: ["string", "null"] }
+        term: { type: ["string", "null"] }
+        fileName: { type: ["string", "null"] }
+        fileSizeBytes: { type: ["integer", "null"] }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+    ResourcesPage:
+      type: object
+      required: [data, total, hasMore]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceSummary" }
+        total: { type: integer }
+        hasMore: { type: boolean }
+    ResourceDetail:
+      type: object
+      required: [id, title, description, resourceType, category, subject, academicYear, term, learningObjectives, fileName, fileSizeBytes, files, publishedAt, scheduledPublishAt, expiresAt, isVisibleToStudents, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        subject: { type: ["string", "null"] }
+        academicYear: { type: ["string", "null"] }
+        term: { type: ["string", "null"] }
+        learningObjectives:
+          type: array
+          items: { type: string }
+        fileName: { type: ["string", "null"] }
+        fileSizeBytes: { type: ["integer", "null"] }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        scheduledPublishAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        isVisibleToStudents: { type: boolean }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CreateResourceInput:
+      type: object
+      additionalProperties: false
+      required: [classId, title, resourceType]
+      properties:
+        classId: { type: string, format: uuid }
+        title: { type: string, minLength: 2, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        subject: { type: string, maxLength: 100 }
+        learningObjectives:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 500 }
+        lessonId: { type: string, format: uuid }
+        termId: { type: ["string", "null"], format: uuid }
+        publishAt: { type: string, format: date-time }
+        publish: { type: string, enum: [draft, published, scheduled] }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        isVisibleToStudents: { type: boolean }
+        restrictedToStudentIds:
+          type: array
+          maxItems: 200
+          items: { type: string, format: uuid }
+        files:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/StoredFileInput" }
+    ResourceCreated:
+      type: object
+      required: [id, title, resourceType, category, isVisibleToStudents, publishedAt, files, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        isVisibleToStudents: { type: boolean }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        createdAt: { type: string, format: date-time }
+    RecentResource:
+      type: object
+      required: [id, title, resourceType, publishedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        publishedAt: { type: ["string", "null"], format: date-time }
+    RecentResources:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/RecentResource" }
+    BookmarkToggle:
+      type: object
+      required: [bookmarked]
+      properties:
+        bookmarked: { type: boolean }
+    BookmarkedResource:
+      type: object
+      required: [id, title, resourceType, description, bookmarkedAt]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        description: { type: ["string", "null"] }
+        bookmarkedAt: { type: ["string", "null"], format: date-time }
+    BookmarksPage:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/BookmarkedResource" }
+    LessonItem:
+      type: object
+      required: [id, name, topic]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        topic: { type: ["string", "null"] }
+    LessonChapter:
+      type: object
+      required: [chapter, lessons]
+      properties:
+        chapter: { type: string }
+        lessons:
+          type: array
+          items: { $ref: "#/components/schemas/LessonItem" }
+    LessonUnit:
+      type: object
+      required: [unit, chapters]
+      properties:
+        unit: { type: string }
+        chapters:
+          type: array
+          items: { $ref: "#/components/schemas/LessonChapter" }
+    ClassLessons:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/LessonUnit" }
+    TimetableEntry:
+      type: object
+      required: [id, period, subject, teacher, startTime, endTime, room]
+      properties:
+        id: { type: string, format: uuid }
+        period: { type: integer }
+        subject: { type: string }
+        teacher: { type: string }
+        startTime: { type: string }
+        endTime: { type: string }
+        room: { type: ["string", "null"] }
+    TodayTimetable:
+      type: object
+      required: [data, date]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/TimetableEntry" }
+        date: { $ref: "#/components/schemas/CalendarDate" }
+    WeekDay:
+      type: object
+      required: [dayOfWeek, dayName, classes]
+      properties:
+        dayOfWeek: { type: integer, minimum: 0, maximum: 6 }
+        dayName: { type: string }
+        classes:
+          type: array
+          items: { $ref: "#/components/schemas/TimetableEntry" }
+    WeekTimetable:
+      type: object
+      required: [data, weekStart]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/WeekDay" }
+        weekStart: { $ref: "#/components/schemas/CalendarDate" }
+    DateTimetable:
+      type: object
+      required: [data, date, dayOfWeek]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/TimetableEntry" }
+        date: { $ref: "#/components/schemas/CalendarDate" }
+        dayOfWeek: { type: integer, minimum: 0, maximum: 6 }
+    TimetableEntryInput:
+      type: object
+      additionalProperties: false
+      required: [classId, dayOfWeek, periodNumber, startTime, endTime, subject, teacherUserId]
+      properties:
+        classId: { type: string, format: uuid }
+        dayOfWeek: { type: integer, minimum: 0, maximum: 6 }
+        periodNumber: { type: integer, minimum: 1 }
+        startTime: { type: string, pattern: "^\\d{2}:\\d{2}(:\\d{2})?$" }
+        endTime: { type: string, pattern: "^\\d{2}:\\d{2}(:\\d{2})?$" }
+        subject: { type: string, minLength: 1, maxLength: 100 }
+        teacherUserId: { type: string, minLength: 1, maxLength: 128 }
+        roomLocation: { type: string, maxLength: 100 }
+    TimetableEntrySaved:
+      type: object
+      required: [id, classId, dayOfWeek, periodNumber, subject, startTime, endTime]
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        dayOfWeek: { type: integer }
+        periodNumber: { type: integer }
+        subject: { type: string }
+        startTime: { type: string }
+        endTime: { type: string }
+
+    SubjectOptions:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { type: string }
+    StoredFileKind:
+      type: string
+      enum: [pdf, word, powerpoint, image, spreadsheet, text, archive]
+    PublishState:
+      type: string
+      enum: [all, draft, published, scheduled, archived]
+    UploadTargetsInput:
+      type: object
+      additionalProperties: false
+      required: [classId, files]
+      properties:
+        classId: { type: string, format: uuid }
+        files:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: { $ref: "#/components/schemas/FileDeclaration" }
+    FileDeclaration:
+      type: object
+      additionalProperties: false
+      required: [name, size, type]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 250 }
+        size: { type: integer, minimum: 1 }
+        type: { type: string, maxLength: 120 }
+    UploadTarget:
+      type: object
+      required: [id, path, name, size, type, extension, kind, method, uploadUrl, headers, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        path: { type: string }
+        name: { type: string }
+        size: { type: integer }
+        type: { type: string }
+        extension: { type: string }
+        kind: { $ref: "#/components/schemas/StoredFileKind" }
+        method: { type: string, enum: [PUT] }
+        uploadUrl: { type: string }
+        headers:
+          type: object
+          additionalProperties: { type: string }
+        expiresAt: { type: string, format: date-time }
+    UploadTargets:
+      type: object
+      required: [data, maxFileBytes, allowedTypes]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/UploadTarget" }
+        maxFileBytes: { type: integer }
+        allowedTypes:
+          type: array
+          items: { type: string }
+    SubmissionUploadTargetsInput:
+      type: object
+      additionalProperties: false
+      required: [files]
+      properties:
+        files:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: { $ref: "#/components/schemas/FileDeclaration" }
+    StoredFileInput:
+      type: object
+      additionalProperties: false
+      required: [id, path, name, size, type]
+      properties:
+        id: { type: string, format: uuid }
+        path: { type: string, maxLength: 1000 }
+        name: { type: string, maxLength: 250 }
+        size: { type: integer, minimum: 1 }
+        type: { type: string, maxLength: 120 }
+    StoredFile:
+      type: object
+      required: [id, path, name, size, type, uploadedAt]
+      properties:
+        id: { type: string, format: uuid }
+        path: { type: string }
+        name: { type: string }
+        size: { type: integer }
+        type: { type: string }
+        uploadedAt: { type: string, format: date-time }
+    FileDownload:
+      type: object
+      required: [url, name, size, type, expiresAt]
+      properties:
+        url: { type: string }
+        name: { type: string }
+        size: { type: integer }
+        type: { type: string }
+        expiresAt: { type: string, format: date-time }
+    ResourceCategory:
+      type: string
+      enum:
+        - class_notes
+        - revision_notes
+        - worksheet
+        - reading_material
+        - presentation
+        - study_guide
+        - past_paper
+        - exam_resources
+        - textbook
+        - other
+    ManagedResource:
+      type: object
+      required: [id, classId, className, title, description, subject, category, resourceType, academicYear, term, uploadedBy, learningObjectives, lessonId, termId, state, publishedAt, scheduledPublishAt, expiresAt, isVisibleToStudents, restrictedToStudentIds, files, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        className: { type: ["string", "null"] }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        subject: { type: ["string", "null"] }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        resourceType: { $ref: "#/components/schemas/ResourceType" }
+        academicYear: { type: ["string", "null"] }
+        term: { type: ["string", "null"] }
+        uploadedBy: { type: ["string", "null"] }
+        learningObjectives:
+          type: array
+          items: { type: string }
+        lessonId: { type: ["string", "null"], format: uuid }
+        termId: { type: ["string", "null"], format: uuid }
+        state: { type: string, enum: [draft, scheduled, published, expired, archived] }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        scheduledPublishAt: { type: ["string", "null"], format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        isVisibleToStudents: { type: boolean }
+        restrictedToStudentIds:
+          type: array
+          items: { type: string, format: uuid }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ManagedResourcesPage:
+      type: object
+      required: [data, total, storageEnabled]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/ManagedResource" }
+        total: { type: integer }
+        storageEnabled: { type: boolean }
+    UpdateResourceInput:
+      type: object
+      additionalProperties: false
+      properties:
+        title: { type: string, minLength: 2, maxLength: 200 }
+        description: { type: string, maxLength: 2000 }
+        subject: { type: string, maxLength: 100 }
+        category: { $ref: "#/components/schemas/ResourceCategory" }
+        learningObjectives:
+          type: array
+          maxItems: 20
+          items: { type: string, maxLength: 500 }
+        lessonId: { type: ["string", "null"], format: uuid }
+        termId: { type: ["string", "null"], format: uuid }
+        files:
+          type: array
+          maxItems: 10
+          items: { $ref: "#/components/schemas/StoredFileInput" }
+    PublishResourceInput:
+      type: object
+      additionalProperties: false
+      required: [state]
+      properties:
+        state: { type: string, enum: [draft, published, scheduled] }
+        publishAt: { type: string, format: date-time }
+        expiresAt: { type: ["string", "null"], format: date-time }
+        restrictedToStudentIds:
+          type: array
+          maxItems: 200
+          items: { type: string, format: uuid }
+    AssignmentKind:
+      type: string
+      enum: [homework, classwork, individual, group, project, revision, practical]
+    ManagedAssignment:
+      type: object
+      required: [id, classId, subject, title, description, instructions, attachedResourceIds, assignmentKind, marksAllocated, deadlineDate, deadlineTime, allowResubmission, allowLate, allowedFileTypes, state, publishedAt, archivedAt, files, submissionCount, gradedCount, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        classId: { type: string, format: uuid }
+        subject: { type: string }
+        title: { type: string }
+        description: { type: ["string", "null"] }
+        instructions:
+          type: array
+          items: { $ref: "#/components/schemas/InstructionItem" }
+        attachedResourceIds:
+          type: array
+          items: { type: string, format: uuid }
+        assignmentKind: { $ref: "#/components/schemas/AssignmentKind" }
+        topic: { type: ["string", "null"] }
+        marksAllocated: { type: integer }
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: ["string", "null"] }
+        allowResubmission: { type: boolean }
+        allowLate: { type: boolean }
+        allowedFileTypes:
+          type: array
+          items: { type: string }
+        state: { type: string, enum: [draft, published, scheduled, archived, cancelled] }
+        publishedAt: { type: ["string", "null"], format: date-time }
+        archivedAt: { type: ["string", "null"], format: date-time }
+        files:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        submissionCount: { type: integer }
+        gradedCount: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    ManagedAssignmentsPage:
+      type: object
+      required: [data, total, storageEnabled]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/ManagedAssignment" }
+        total: { type: integer }
+        storageEnabled: { type: boolean }
+    PublishAssignmentInput:
+      type: object
+      additionalProperties: false
+      required: [state]
+      properties:
+        state: { type: string, enum: [draft, published, scheduled] }
+        publishAt: { type: string, format: date-time }
+    AssignmentStateInput:
+      type: object
+      additionalProperties: false
+      required: [state]
+      properties:
+        state: { type: string, enum: [archived, cancelled] }
+    ExtendDeadlineInput:
+      type: object
+      additionalProperties: false
+      required: [deadlineDate]
+      properties:
+        deadlineDate: { $ref: "#/components/schemas/CalendarDate" }
+        deadlineTime: { type: string, pattern: "^\\d{2}:\\d{2}(:\\d{2})?$" }
+    SubmissionRosterRow:
+      type: object
+      required: [id, studentId, studentName, admissionNumber, submittedAt, submittedText, submittedFiles, marksObtained, feedback, markedAt, status, isLate]
+      properties:
+        id: { type: ["string", "null"], format: uuid }
+        studentId: { type: string, format: uuid }
+        studentName: { type: ["string", "null"] }
+        admissionNumber: { type: ["string", "null"] }
+        submittedAt: { type: ["string", "null"], format: date-time }
+        submittedText: { type: ["string", "null"] }
+        submittedFiles:
+          type: array
+          items: { $ref: "#/components/schemas/StoredFile" }
+        marksObtained: { type: ["number", "null"] }
+        feedback: { type: ["string", "null"] }
+        markedAt: { type: ["string", "null"], format: date-time }
+        status: { $ref: "#/components/schemas/AssignmentStatus" }
+        isLate: { type: boolean }
+    ManagedSubmissionsPage:
+      type: object
+      required: [data, total, submissionCount, gradedCount, notSubmittedCount]
+      properties:
+        data:
+          type: array
+          items: { $ref: "#/components/schemas/SubmissionRosterRow" }
+        total: { type: integer }
+        submissionCount: { type: integer }
+        gradedCount: { type: integer }
+        notSubmittedCount: { type: integer }

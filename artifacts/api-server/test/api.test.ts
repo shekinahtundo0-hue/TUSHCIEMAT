@@ -217,7 +217,9 @@ describe("authentication", () => {
         capabilities: [
           "students.manage", "academics.manage", "attendance.manage", "people.manage",
           "requests.review", "settings.manage", "announcements.manage",
-          "assessments.manage", "results.publish", "resources.manage", "records.delete",
+          "assessments.manage", "results.publish", "resources.manage",
+          "staff.manage", "workload.manage", "communications.manage", "classroom.manage",
+          "records.delete",
         ],
       },
     ]);
@@ -291,7 +293,9 @@ describe("school context and tenant isolation", () => {
       capabilities: [
         "students.manage", "academics.manage", "attendance.manage", "people.manage",
         "requests.review", "settings.manage", "announcements.manage",
-        "assessments.manage", "results.publish", "resources.manage", "records.delete",
+        "assessments.manage", "results.publish", "resources.manage",
+        "staff.manage", "workload.manage", "communications.manage", "classroom.manage",
+        "records.delete",
       ],
     }]);
     const years = await call("GET", "/api/v1/academic-years", { as: USERS.outsider, school: created.json.id });
@@ -546,6 +550,55 @@ describe("members and invitations", () => {
       }),
       409,
     );
+  });
+});
+
+describe("member capability array binding", () => {
+  async function adminMember() {
+    const members = await call("GET", "/api/v1/members", { as: USERS.ownerA, school: fx.schoolA });
+    assert.equal(members.status, 200, JSON.stringify(members.json));
+    const member = members.json.find((m: { authUserId: string }) => m.authUserId === USERS.adminA);
+    assert.ok(member);
+    return member;
+  }
+
+  for (const { name, capabilities } of [
+    { name: "sets one capability", capabilities: ["students.manage"] },
+    { name: "replaces existing capabilities with multiple values", capabilities: ["resources.manage", "people.manage"] },
+    { name: "clears existing capabilities with an empty array", capabilities: [] },
+  ]) {
+    it(name, async () => {
+      const original = await adminMember();
+      assert.ok(original.capabilities.length > 0);
+      const path = `/api/v1/members/${original.membershipId}/capabilities`;
+      try {
+        const updated = await call("PATCH", path, {
+          as: USERS.ownerA, school: fx.schoolA, body: { capabilities },
+        });
+        assert.equal(updated.status, 200, JSON.stringify(updated.json));
+        assert.equal(updated.json.membershipId, original.membershipId);
+        assert.deepEqual(updated.json.capabilities, [...capabilities].sort());
+        // A separate HTTP read verifies committed replacement, not just the response.
+        assert.deepEqual((await adminMember()).capabilities, [...capabilities].sort());
+      } finally {
+        const restored = await call("PATCH", path, {
+          as: USERS.ownerA, school: fx.schoolA, body: { capabilities: original.capabilities },
+        });
+        assert.equal(restored.status, 200, JSON.stringify(restored.json));
+      }
+    });
+  }
+
+  it("rejects non-owner and cross-school actors without changing capabilities", async () => {
+    const original = await adminMember();
+    for (const actor of [USERS.adminA, USERS.teacherA, USERS.ownerB]) {
+      for (const capabilities of [["students.manage"], ["resources.manage", "people.manage"], []]) {
+        assertError(await call("PATCH", `/api/v1/members/${original.membershipId}/capabilities`, {
+          as: actor, school: fx.schoolA, body: { capabilities },
+        }), 403);
+        assert.deepEqual((await adminMember()).capabilities, original.capabilities);
+      }
+    }
   });
 });
 

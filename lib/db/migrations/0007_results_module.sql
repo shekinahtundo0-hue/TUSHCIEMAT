@@ -67,11 +67,11 @@ CREATE TABLE public.grading_scales (
   description text,
   grade_bands jsonb NOT NULL,
   is_default boolean NOT NULL DEFAULT false,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  UNIQUE(school_id) WHERE is_default
+  created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
 CREATE INDEX grading_scales_school_idx ON public.grading_scales(school_id);
+CREATE UNIQUE INDEX grading_scales_school_default_unique ON public.grading_scales(school_id) WHERE is_default;
 
 -- Result publications
 CREATE TABLE public.result_publications (

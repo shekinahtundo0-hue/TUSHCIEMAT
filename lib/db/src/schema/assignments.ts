@@ -28,6 +28,40 @@ export const assignmentSubmissionStatusEnum = pgEnum("assignment_submission_stat
   "overdue",
 ]);
 
+export const assignmentStatusEnum = pgEnum("assignment_status", [
+  "draft",
+  "published",
+  "scheduled",
+  "archived",
+  "cancelled",
+]);
+
+export const assignmentKindEnum = pgEnum("assignment_kind", [
+  "homework",
+  "classwork",
+  "individual",
+  "group",
+  "project",
+  "revision",
+  "practical",
+]);
+
+/** Attachment reference for a stored file: path is the storage object key, never the bytes. */
+export type StoredAttachment = {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  path: string;
+};
+
+/** One earlier version of a learner's submission, kept when they resubmit. */
+export type SubmissionRevision = {
+  at: string;
+  text: string | null;
+  files: StoredAttachment[];
+};
+
 /**
  * Assignments table - stores assignment metadata, instructions, resources, and deadlines
  */
@@ -56,6 +90,14 @@ export const assignmentsTable = pgTable(
     deadlineDate: date("deadline_date").notNull(),
     deadlineTime: time("deadline_time"),
     allowResubmission: boolean("allow_resubmission").notNull().default(false),
+    status: assignmentStatusEnum("status").notNull().default("published"),
+    assignmentKind: assignmentKindEnum("assignment_kind").notNull().default("homework"),
+    publishedAt: timestamp("published_at", { withTimezone: true }).defaultNow(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    allowLate: boolean("allow_late").notNull().default(false),
+    topic: text("topic"),
+    allowedFileTypes: jsonb("allowed_file_types").$type<string[]>().notNull().default([]),
+    attachments: jsonb("attachments").$type<StoredAttachment[]>().notNull().default([]),
     createdByUserId: text("created_by_user_id")
       .notNull()
       .references(() => userProfilesTable.authUserId),
@@ -68,12 +110,27 @@ export const assignmentsTable = pgTable(
   },
   (table) => [
     index("assignments_school_class_idx").on(table.schoolId, table.classId),
+    index("assignments_class_status_idx").on(table.schoolId, table.classId, table.status),
     uniqueIndex("assignments_class_subject_title_unique").on(
       table.classId,
       table.subject,
       table.title,
     ),
     check("assignments_marks_check", sql`${table.marksAllocated} > 0`),
+    check(
+      "assignments_lifecycle_check",
+      sql`
+        CASE
+          WHEN ${table.status} = 'draft' THEN ${table.publishedAt} IS NULL
+          WHEN ${table.status} IN ('published', 'scheduled') THEN ${table.publishedAt} IS NOT NULL
+          ELSE true
+        END
+      `,
+    ),
+    check("assignments_attachments_shape_check", sql`
+      jsonb_typeof(${table.attachments}) = 'array'
+      AND jsonb_typeof(${table.allowedFileTypes}) = 'array'
+    `),
   ],
 );
 
@@ -95,7 +152,7 @@ export const assignmentSubmissionsTable = pgTable(
       .references(() => studentsTable.id, { onDelete: "cascade" }),
     submissionText: text("submission_text"),
     submittedFiles: jsonb("submitted_files")
-      .$type<Array<{ id: string; name: string; size: number; type: string }>>()
+      .$type<StoredAttachment[]>()
       .notNull()
       .default([]),
     submittedAt: timestamp("submitted_at", { withTimezone: true }),
@@ -108,6 +165,8 @@ export const assignmentSubmissionsTable = pgTable(
     status: assignmentSubmissionStatusEnum("status")
       .notNull()
       .default("not_started"),
+    isLate: boolean("is_late").notNull().default(false),
+    revisionHistory: jsonb("revision_history").$type<SubmissionRevision[]>().notNull().default([]),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -126,6 +185,10 @@ export const assignmentSubmissionsTable = pgTable(
     check(
       "assignment_submissions_marks_check",
       sql`${table.marksObtained} IS NULL OR (${table.marksObtained} >= 0)`,
+    ),
+    check(
+      "assignment_submissions_history_shape_check",
+      sql`jsonb_typeof(${table.revisionHistory}) = 'array'`,
     ),
   ],
 );

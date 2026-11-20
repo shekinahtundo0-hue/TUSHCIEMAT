@@ -3,6 +3,7 @@ import { ConfigError, loadConfig } from "./config/env";
 import { createDatabase, createPool } from "./lib/database";
 import { firebaseIdentityVerifier } from "./lib/identity";
 import { logger } from "./lib/logger";
+import { createSupabaseStorage } from "./lib/storage";
 
 function start(): void {
   let config;
@@ -24,7 +25,14 @@ function start(): void {
   pool.on("error", (error) => logger.error({ err: error }, "Idle database client error"));
 
   const database = createDatabase(pool);
-  const app = createApp({ config, database, identity: firebaseIdentityVerifier(config.firebaseProjectId), logger });
+  const storage = config.storage ? createSupabaseStorage(config.storage) : null;
+  const app = createApp({
+    config,
+    database,
+    identity: firebaseIdentityVerifier(config.firebaseProjectId),
+    storage,
+    logger,
+  });
 
   const server = app.listen(config.port, (error) => {
     if (error) {

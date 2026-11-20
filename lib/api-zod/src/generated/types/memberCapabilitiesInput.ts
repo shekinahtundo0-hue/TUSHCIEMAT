@@ -12,6 +12,6 @@
 import type { SchoolCapability } from './schoolCapability';
 
 export interface MemberCapabilitiesInput {
-  /** @maxItems 11 */
+  /** @maxItems 15 */
   capabilities: SchoolCapability[];
 }

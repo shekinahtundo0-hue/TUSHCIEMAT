@@ -10,8 +10,12 @@ export const STAFF = [
   "academic_admin",
 ] as const satisfies readonly SchoolRole[];
 export const GUARDIAN_VIEWERS = [...STAFF, "bursar"] as const satisfies readonly SchoolRole[];
+// Guardians viewing their own linked children's records. Staff use the staff-facing endpoints instead.
+export const GUARDIAN = ["parent"] as const satisfies readonly SchoolRole[];
 export const STUDENT_VIEWERS = [...STAFF, "bursar", "teacher"] as const satisfies readonly SchoolRole[];
 export const ATTENDANCE_TAKERS = [...STAFF, "teacher"] as const satisfies readonly SchoolRole[];
+// Classroom content authorship: teachers are scoped to their classes by RLS (teaches_class).
+export const CLASSROOM_MANAGERS = [...STAFF, "teacher"] as const satisfies readonly SchoolRole[];
 export const ANY_MEMBER = [
   "owner",
   "school_admin",

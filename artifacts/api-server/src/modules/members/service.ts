@@ -87,10 +87,12 @@ export async function setMemberCapabilities(
     .from(schoolMembershipsTable)
     .where(and(eq(schoolMembershipsTable.id, membershipId), eq(schoolMembershipsTable.schoolId, ctx.schoolId)));
   if (!existing) throw notFound("Member not found.");
+  // Bind each value separately; the explicit cast also types an empty ARRAY[].
+  const capabilityArray = sql`ARRAY[${sql.join(capabilities.map((capability) => sql`${capability}`), sql`, `)}]::text[]`;
   // Owner-only, same-school school_admin target, atomic audited replacement:
   // all enforced inside the database routine and its triggers.
   await tx.execute(
-    sql`select app_private.set_member_capabilities(${ctx.schoolId}::uuid, ${membershipId}::uuid, ${capabilities}::text[])`,
+    sql`select app_private.set_member_capabilities(${ctx.schoolId}::uuid, ${membershipId}::uuid, ${capabilityArray})`,
   );
   return getMember(tx, ctx, membershipId);
 }

@@ -109,7 +109,7 @@ export function AssignmentCard({ assignment, onView }: AssignmentCardProps) {
         </div>
         <div>
           <p className="text-gray-600 font-medium">Deadline</p>
-          <p className="text-gray-900 font-semibold">{formatDate(deadline)}</p>
+          <p className="text-gray-900 font-semibold">{formatDate(deadline.toISOString())}</p>
         </div>
         <div>
           <p className="text-gray-600 font-medium">Time Left</p>

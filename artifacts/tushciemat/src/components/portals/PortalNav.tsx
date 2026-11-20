@@ -67,7 +67,7 @@ export function PortalNav({ portal, currentRoute, navigate }: PortalNavProps) {
         <div className="p-6 border-b border-gray-800">
           <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wider">Learning Portal</h2>
           <p className="text-xs text-gray-400 mt-2">{school?.schoolName}</p>
-          <p className="text-sm font-medium text-white mt-3">{me?.firstName} {me?.lastName}</p>
+          <p className="text-sm font-medium text-white mt-3">{me?.fullName}</p>
         </div>
 
         {/* Navigation */}
@@ -111,7 +111,7 @@ export function PortalNav({ portal, currentRoute, navigate }: PortalNavProps) {
       <div className="md:hidden flex items-center justify-between bg-gray-900 text-white p-4">
         <div>
           <h2 className="text-sm font-semibold text-gray-300">Learning Portal</h2>
-          <p className="text-xs text-gray-400">{me?.firstName} {me?.lastName}</p>
+          <p className="text-xs text-gray-400">{me?.fullName}</p>
         </div>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

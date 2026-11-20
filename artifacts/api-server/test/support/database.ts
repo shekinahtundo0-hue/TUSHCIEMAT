@@ -30,7 +30,7 @@ export type TestDatabase = {
 };
 
 // Mirrors production: migrations run as the schema owner, the API logs in as tushciemat_api.
-export async function startTestDatabase(): Promise<TestDatabase> {
+export async function startTestDatabase(migrate = runMigrations): Promise<TestDatabase> {
   const port = await freePort();
   const databaseDir = await mkdtemp(path.join(os.tmpdir(), "tushciemat-pg-"));
   const server = new EmbeddedPostgres({
@@ -42,27 +42,30 @@ export async function startTestDatabase(): Promise<TestDatabase> {
     persistent: false,
     onLog: () => {},
   });
-  await server.initialise();
-  await server.start();
-  await server.createDatabase("tushciemat");
-
   const ownerUrl = `postgres://postgres:${OWNER_PASSWORD}@127.0.0.1:${port}/tushciemat`;
   const apiUrl = `postgres://tushciemat_api:${API_PASSWORD}@127.0.0.1:${port}/tushciemat`;
   const owner = new pg.Pool({ connectionString: ownerUrl, max: 4 });
-
-  await runMigrations(ownerUrl);
-  // Operator step documented in docs/deployment.md: give the API role a login.
-  await owner.query(`ALTER ROLE tushciemat_api WITH LOGIN PASSWORD '${API_PASSWORD}'`);
-
-  return {
-    ownerUrl,
-    apiUrl,
-    owner,
-    stop: async () => {
+  const stop = async () => {
+    try {
       await owner.end();
+    } finally {
       await server.stop();
-    },
+    }
   };
+
+  try {
+    await server.initialise();
+    await server.start();
+    await server.createDatabase("tushciemat");
+    await migrate(ownerUrl);
+    // Operator step documented in docs/deployment.md: give the API role a login.
+    await owner.query(`ALTER ROLE tushciemat_api WITH LOGIN PASSWORD '${API_PASSWORD}'`);
+  } catch (error) {
+    await stop();
+    throw error;
+  }
+
+  return { ownerUrl, apiUrl, owner, stop };
 }
 
 /** Runs fn in a transaction as tushciemat_api with the given verified user id. */

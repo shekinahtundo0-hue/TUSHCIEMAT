@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { initializeApp } from 'firebase/app';
 import {
-  GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, type User,
+  GoogleAuthProvider, getAuth, onAuthStateChanged, signInWithRedirect, signOut as firebaseSignOut, type User,
 } from 'firebase/auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { setAuthTokenGetter } from '@workspace/api-client-react';
@@ -70,7 +70,7 @@ export function signOut() {
 }
 
 export function signInWithGoogle() {
-  return signInWithPopup(auth, new GoogleAuthProvider());
+  return signInWithRedirect(auth, new GoogleAuthProvider());
 }
 
 const SILENT = new Set(['auth/popup-closed-by-user', 'auth/cancelled-popup-request', 'auth/user-cancelled']);

@@ -14,7 +14,7 @@ import {
   UpdateStudentParams,
   UpdateStudentResponse,
 } from "@workspace/api-zod";
-import { inSchool, send } from "../../lib/context";
+import { inSchool, send, sendNoContent } from "../../lib/context";
 import type { AppDeps } from "../../lib/deps";
 import { parseInput } from "../../lib/errors";
 import { STAFF, STUDENT_VIEWERS } from "../../lib/roles";
@@ -66,7 +66,7 @@ export function studentRoutes(deps: AppDeps): Router {
   router.delete("/students/:studentId/guardians/:guardianId", async (req, res) => {
     const { studentId, guardianId } = parseInput(RemoveGuardianParams, req.params);
     await inSchool(database, req, res, { roles: STAFF, capability: "students.manage" }, (tx, ctx) => removeGuardian(tx, ctx, studentId, guardianId));
-    res.status(204).end();
+    sendNoContent(res);
   });
 
   return router;

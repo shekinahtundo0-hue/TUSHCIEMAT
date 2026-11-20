@@ -91,7 +91,7 @@ export function ResourceCard({
             <span className="font-medium">Subject:</span> {resource.subject}
           </div>
           <div>
-            <span className="font-medium">Added:</span> {formatDate(new Date(resource.createdAt))}
+            <span className="font-medium">Added:</span> {formatDate(resource.createdAt)}
           </div>
           {resource.fileSizeBytes && (
             <div>

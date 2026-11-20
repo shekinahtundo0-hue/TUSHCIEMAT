@@ -16,6 +16,7 @@ export const schoolCapabilityEnum = pgEnum("school_capability", [
   "staff.manage",
   "workload.manage",
   "communications.manage",
+  "classroom.manage",
 ]);
 
 // Only school_admin memberships receive explicit capabilities. The security
